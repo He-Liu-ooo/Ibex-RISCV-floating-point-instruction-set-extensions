@@ -53,6 +53,10 @@ $(PROGRAM).elf: $(OBJS) $(LINKER_SCRIPT)
 %.o: %.S
 	$(CC) $(CFLAGS) -MMD -c $(INCS) -o $@ $<
 
+%.o: %.s
+	$(CC) $(CFLAGS) -MMD -c $(INCS) -o $@ $<
+
+
 clean:
 	$(RM) -f *.o *.d
 
