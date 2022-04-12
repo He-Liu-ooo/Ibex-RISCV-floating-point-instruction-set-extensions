@@ -145,11 +145,11 @@ x_core
   logic data_req_d0;
   always @(posedge clk_cpu or negedge rstn_cpu) begin
     if (!rstn_cpu)
-      data_req_d0 <= 0;
+      dahbl_hwdata_o <= 32'b0;
     else
-      data_req_d0 <= data_req;
+      dahbl_hwdata_o <= data_wdata;
   end
-  assign data_gnt      = (data_req_d0&&dahbl_hready_i);
+  assign data_gnt      = (data_req&&dahbl_hready_i);
   assign data_ac_valid = data_gnt;
   always_comb begin
     case(data_be)
@@ -173,7 +173,7 @@ x_core
   assign dahbl_hprot_o     = 4'b0011;
   assign dahbl_htrans_o[0] = 1'b0; 
   assign dahbl_htrans_o[1] = data_ac_valid; 
-  assign dahbl_hwdata_o    = (data_dr_valid&&dahbl_hready_i) ? data_wdata : 32'h0;
+  //assign dahbl_hwdata_o    = (data_dr_valid&&dahbl_hready_i) ? data_wdata : 32'h0;
   assign dahbl_hwrite_o    = data_we;
   always_ff@(posedge clk_cpu or negedge rstn_cpu) begin
     if(!rstn_cpu)
