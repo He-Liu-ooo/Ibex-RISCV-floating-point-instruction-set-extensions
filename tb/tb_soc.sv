@@ -18,7 +18,7 @@ soc_ahblite x_soc
         rstn = 1'b0;
         #20
         rstn = 1'b1;
-        #600000;
+        #60000;
         $finish(2);
     end
 
