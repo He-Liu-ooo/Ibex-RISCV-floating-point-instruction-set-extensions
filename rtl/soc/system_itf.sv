@@ -4,7 +4,7 @@ import system_pkg::*;
 );
 
   logic                    hsel      ;
-  logic   [ADDR_WIDTH-5:0] haddr     ;
+  logic   [ADDR_WIDTH-1:0] haddr     ;
   logic   [2:0]            hburst    ;
   logic                    hmastlock ;
   logic   [3:0]            hprot     ;

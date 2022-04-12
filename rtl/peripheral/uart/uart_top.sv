@@ -14,7 +14,7 @@ module uart_top#(
     input  wire              penable,
     input  wire              pwrite,
     input  wire              psel,
-    input  wire [ADDR_W-1:0] paddr,
+    input  wire [32-1:0]     paddr,
     input  wire [DATA_W-1:0] pwdata,
     output reg  [DATA_W-1:0] prdata,
     output wire              pready,  //tie high.

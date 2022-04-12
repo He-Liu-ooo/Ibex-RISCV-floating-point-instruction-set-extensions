@@ -84,6 +84,7 @@ uart_top x_uart_top (
     .pwrite     (pwrite ),
     .psel       (psel_s1),
     .prdata     (prdata_s1),
+    .pready     (),
     .pslverr    (),
 
     .uart_clk   (clk    ),

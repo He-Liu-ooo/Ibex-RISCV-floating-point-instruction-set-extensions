@@ -52,7 +52,6 @@ import system_pkg::*;
   logic        fetch_enable  ;
   logic        core_sleep    ;//core sleep signal
   logic [3:0]  data_be       ;
-  logic [14:0] irq           ;
   logic [31:0] hart_id       ;
   logic [31:0] boot_addr     ;
   logic [31:0] instr_addr    ;
