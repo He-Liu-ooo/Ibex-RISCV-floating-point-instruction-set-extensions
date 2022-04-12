@@ -29,9 +29,7 @@ import system_pkg::*;
   logic        sram_data_valid;
   logic [6:0]  sram_rd_addr;
   assign sram_rd_addr = ahbl_haddr[8:2];
-  initial begin
-    $readmemh("../sw/led/led.vmem",sram_mem);
-  end
+
   always_ff@(posedge clk or negedge rstn) begin
     if(!rstn) begin
       ahbl_hsize_d0 <= 3'b010;
