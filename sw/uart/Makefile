@@ -4,7 +4,7 @@
 #
 # Generate a baremetal application
 
-PROGRAM ?= led
+PROGRAM ?= uart
 PROGRAM_CFLAGS = -Wall -g -Os
 ARCH = rv32imc
 # ARCH = rv32im # to disable compressed instructions
