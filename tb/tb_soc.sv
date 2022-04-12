@@ -30,10 +30,10 @@ soc_ahblite x_soc
     end
 
 initial begin
-    initial begin
-        $display("*****start to load program*****");
-        $readmemh("../sw/uart/uart.vmem",x_soc.x_isram_ahbl.sram_mem);
-    end
+
+    $display("*****start to load program*****");
+    $readmemh("../sw/uart/uart.vmem",x_soc.x_isram_ahbl.sram_mem);
+
 end
 
   initial begin
