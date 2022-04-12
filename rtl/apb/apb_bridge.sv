@@ -50,8 +50,7 @@ module apb_bridge (
   output    logic           psel_s5,
   output    logic           psel_s6,
   output    logic           psel_s7,
-  output    logic           psel_s8,
-
+  output    logic           psel_s8
 
 );
 
