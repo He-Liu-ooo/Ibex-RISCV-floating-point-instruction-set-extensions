@@ -8,6 +8,8 @@
 ../rtl/soc/data_sram.sv
 ../rtl/soc/sram_8x1024.sv
 ../rtl/soc/decoder.sv
+../rtl/apb/apb.sv
+../rtl/apb/apb_bridge.sv
 ../ibex/ibex_pkg.sv
 ../ibex/ibex_tracer_pkg.sv
 ../ibex/ibex_core.sv
