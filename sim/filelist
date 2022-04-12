@@ -8,10 +8,6 @@
 ../rtl/soc/data_sram.sv
 ../rtl/soc/sram_8x1024.sv
 ../rtl/soc/decoder.sv
-//../rtl/soc/soc.sv
-//../rtl/soc/sub_system.sv
-//../rtl/soc/dsram_ahbl.sv
-//../rtl/soc/isram_ahbl.sv
 ../ibex/ibex_pkg.sv
 ../ibex/ibex_tracer_pkg.sv
 ../ibex/ibex_core.sv
@@ -19,7 +15,6 @@
 ../ibex/ibex_branch_predict.sv
 ../ibex/ibex_compressed_decoder.sv
 ../ibex/ibex_controller.sv
-//../ibex/ibex_core_tracing.sv
 ../ibex/ibex_counter.sv
 ../ibex/ibex_cs_registers.sv
 ../ibex/ibex_csr.sv
@@ -40,3 +35,5 @@
 ../ibex/ibex_wb_stage.sv
 ../ibex/ibex_tracer.sv
 ../ibex/prim_clock_gating.v
+
+../rtl/peripheral/uart_top.sv
