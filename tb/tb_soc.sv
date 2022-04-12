@@ -29,6 +29,13 @@ soc_ahblite x_soc
         #5;
     end
 
+initial begin
+    initial begin
+        $display("*****start to load program*****");
+        $readmemh("../sw/uart/uart.vmem",x_soc.x_isram_ahbl.sram_mem);
+    end
+end
+
   initial begin
     $fsdbDumpfile("tb_soc.fsdb");
     $fsdbDumpvars();
