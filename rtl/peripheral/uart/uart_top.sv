@@ -24,6 +24,7 @@ module uart_top#(
     output wire              uart_irq
 
     );
+assign uart_irq = 0;
 
 wire pwren =  penable &&  pwrite && psel;
 wire prden =  penable && !pwrite && psel;
