@@ -17,6 +17,7 @@ Loop:
     lw x4, 0x0(x2)
     addi x4, x4, 1
     sw x4,  0x0(x2)  
+    sw x4,  0x4(x2)
 
 
     li x6, 0x80
