@@ -69,7 +69,7 @@ decoder x_decoder
 );
   //ahblie_master0 port
   assign ahblite_m0.hsel       = hsel[0]                                 ;
-  assign ahblite_m0.haddr      = hsel[0]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m0.haddr      = hsel[0]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m0.hburst     = hsel[0]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m0.hmastlock  = 1'b0                                    ;
   assign ahblite_m0.hprot      = hsel[0]     ? ahbl_hprot       : 4'h0   ;
@@ -79,7 +79,7 @@ decoder x_decoder
   assign ahblite_m0.hwdata     = hsel_D0[0]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master1 port
   assign ahblite_m1.hsel       = hsel[1]                                 ;
-  assign ahblite_m1.haddr      = hsel[1]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m1.haddr      = hsel[1]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m1.hburst     = hsel[1]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m1.hmastlock  = 1'b0                                    ;
   assign ahblite_m1.hprot      = hsel[1]     ? ahbl_hprot       : 4'h0   ;
@@ -89,7 +89,7 @@ decoder x_decoder
   assign ahblite_m1.hwdata     = hsel_D0[1]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master2 port
   assign ahblite_m2.hsel       = hsel[2]                                 ;
-  assign ahblite_m2.haddr      = hsel[2]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m2.haddr      = hsel[2]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m2.hburst     = hsel[2]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m2.hmastlock  = 1'b0                                    ;
   assign ahblite_m2.hprot      = hsel[2]     ? ahbl_hprot       : 4'h0   ;
@@ -99,7 +99,7 @@ decoder x_decoder
   assign ahblite_m2.hwdata     = hsel_D0[2]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master3 port
   assign ahblite_m3.hsel       = hsel[3]                                 ;
-  assign ahblite_m3.haddr      = hsel[3]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m3.haddr      = hsel[3]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m3.hburst     = hsel[3]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m3.hmastlock  = 1'b0                                    ;
   assign ahblite_m3.hprot      = hsel[3]     ? ahbl_hprot       : 4'h0   ;
@@ -109,7 +109,7 @@ decoder x_decoder
   assign ahblite_m3.hwdata     = hsel_D0[3]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master4 port
   assign ahblite_m4.hsel       = hsel[4]                                 ;
-  assign ahblite_m4.haddr      = hsel[4]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m4.haddr      = hsel[4]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m4.hburst     = hsel[4]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m4.hmastlock  = 1'b0                                    ;
   assign ahblite_m4.hprot      = hsel[4]     ? ahbl_hprot       : 4'h0   ;
@@ -119,7 +119,7 @@ decoder x_decoder
   assign ahblite_m4.hwdata     = hsel_D0[4]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master5 port
   assign ahblite_m5.hsel       = hsel[5]                                 ;
-  assign ahblite_m5.haddr      = hsel[5]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m5.haddr      = hsel[5]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m5.hburst     = hsel[5]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m5.hmastlock  = 1'b0                                    ;
   assign ahblite_m5.hprot      = hsel[5]     ? ahbl_hprot       : 4'h0   ;
@@ -129,7 +129,7 @@ decoder x_decoder
   assign ahblite_m5.hwdata     = hsel_D0[5]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master6 port
   assign ahblite_m6.hsel       = hsel[6]                                 ;
-  assign ahblite_m6.haddr      = hsel[6]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m6.haddr      = hsel[6]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m6.hburst     = hsel[6]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m6.hmastlock  = 1'b0                                    ;
   assign ahblite_m6.hprot      = hsel[6]     ? ahbl_hprot       : 4'h0   ;
@@ -139,7 +139,7 @@ decoder x_decoder
   assign ahblite_m6.hwdata     = hsel_D0[6]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master7 port
   assign ahblite_m7.hsel       = hsel[7]                                 ;
-  assign ahblite_m7.haddr      = hsel[7]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m7.haddr      = hsel[7]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m7.hburst     = hsel[7]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m7.hmastlock  = 1'b0                                    ;
   assign ahblite_m7.hprot      = hsel[7]     ? ahbl_hprot       : 4'h0   ;
@@ -149,7 +149,7 @@ decoder x_decoder
   assign ahblite_m7.hwdata     = hsel_D0[7]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master8 port
   assign ahblite_m8.hsel       = hsel[8]                                 ;
-  assign ahblite_m8.haddr      = hsel[8]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m8.haddr      = hsel[8]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m8.hburst     = hsel[8]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m8.hmastlock  = 1'b0                                    ;
   assign ahblite_m8.hprot      = hsel[8]     ? ahbl_hprot       : 4'h0   ;
@@ -159,7 +159,7 @@ decoder x_decoder
   assign ahblite_m8.hwdata     = hsel_D0[8]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master9 port
   assign ahblite_m9.hsel       = hsel[9]                                 ;
-  assign ahblite_m9.haddr      = hsel[9]     ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m9.haddr      = hsel[9]     ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m9.hburst     = hsel[9]     ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m9.hmastlock  = 1'b0                                    ;
   assign ahblite_m9.hprot      = hsel[9]     ? ahbl_hprot       : 4'h0   ;
@@ -169,7 +169,7 @@ decoder x_decoder
   assign ahblite_m9.hwdata     = hsel_D0[9]  ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master10 port
   assign ahblite_m10.hsel      = hsel[10]                                ;
-  assign ahblite_m10.haddr     = hsel[10]    ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m10.haddr     = hsel[10]    ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m10.hburst    = hsel[10]    ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m10.hmastlock = 1'b0                                    ;
   assign ahblite_m10.hprot     = hsel[10]    ? ahbl_hprot       : 4'h0   ;
@@ -179,7 +179,7 @@ decoder x_decoder
   assign ahblite_m10.hwdata    = hsel_D0[10] ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master11 port
   assign ahblite_m11.hsel      = hsel[11]                                ;
-  assign ahblite_m11.haddr     = hsel[11]    ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m11.haddr     = hsel[11]    ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m11.hburst    = hsel[11]    ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m11.hmastlock = 1'b0                                    ;
   assign ahblite_m11.hprot     = hsel[11]    ? ahbl_hprot       : 4'h0   ;
@@ -189,7 +189,7 @@ decoder x_decoder
   assign ahblite_m11.hwdata    = hsel_D0[11] ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master12 port
   assign ahblite_m12.hsel      = hsel[12]                                ;
-  assign ahblite_m12.haddr     = hsel[12]    ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m12.haddr     = hsel[12]    ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m12.hburst    = hsel[12]    ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m12.hmastlock = 1'b0                                    ;
   assign ahblite_m12.hprot     = hsel[12]    ? ahbl_hprot       : 4'h0   ;
@@ -199,7 +199,7 @@ decoder x_decoder
   assign ahblite_m12.hwdata    = hsel_D0[12] ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master13 port
   assign ahblite_m13.hsel      = hsel[13]                                ;
-  assign ahblite_m13.haddr     = hsel[13]    ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m13.haddr     = hsel[13]    ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m13.hburst    = hsel[13]    ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m13.hmastlock = 1'b0                                    ;
   assign ahblite_m13.hprot     = hsel[13]    ? ahbl_hprot       : 4'h0   ;
@@ -209,7 +209,7 @@ decoder x_decoder
   assign ahblite_m13.hwdata    = hsel_D0[13] ? ahbl_hwdata      : 32'h0  ;
   //ahblie_master14 port
   assign ahblite_m14.hsel      = hsel[14]                                ;
-  assign ahblite_m14.haddr     = hsel[14]    ? ahbl_haddr[27:0] : 32'h0  ;
+  assign ahblite_m14.haddr     = hsel[14]    ? ahbl_haddr[31:0] : 32'h0  ;
   assign ahblite_m14.hburst    = hsel[14]    ? ahbl_hburst      : 3'h0   ;
   assign ahblite_m14.hmastlock = 1'b0                                    ;
   assign ahblite_m14.hprot     = hsel[14]    ? ahbl_hprot       : 4'h0   ;
