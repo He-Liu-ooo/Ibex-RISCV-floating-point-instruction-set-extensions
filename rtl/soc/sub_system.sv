@@ -3,6 +3,8 @@ import system_pkg::*;
 (
   input   logic                    sys_clk_i          ,
   input   logic                    sys_rstn_i         ,
+  // interrupr signals
+  input   logic   [14:0]           irq                ,
   // instruction bus,AHB-Lite
   output  logic   [ADDR_WIDTH-1:0] iahbl_haddr_o      ,
   output  logic   [2:0]            iahbl_hburst_o     ,
@@ -50,7 +52,7 @@ import system_pkg::*;
   logic        fetch_enable  ;
   logic        core_sleep    ;//core sleep signal
   logic [3:0]  data_be       ;
-  logic [14:0] irq_fast      ;
+  logic [14:0] irq           ;
   logic [31:0] hart_id       ;
   logic [31:0] boot_addr     ;
   logic [31:0] instr_addr    ;
@@ -77,7 +79,6 @@ import system_pkg::*;
   assign irq_nm       = 1'b0       ;
   assign debug_req    = 1'b0       ;
   assign fetch_enable = 1'b1       ;
-  assign irq_fast     = 15'h0      ;
 
 ibex_core
 #(
@@ -112,7 +113,7 @@ x_core
   .irq_software_i         ( irq_software  ),
   .irq_timer_i            ( irq_timer     ),
   .irq_external_i         ( irq_external  ),
-  .irq_fast_i             ( irq_fast      ),
+  .irq_fast_i             ( irq           ),
   .irq_nm_i               ( irq_nm        ),
   .debug_req_i            ( debug_req     ),
   .fetch_enable_i         ( fetch_enable  ),

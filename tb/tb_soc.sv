@@ -3,11 +3,16 @@
 module tb_soc;
 
     logic clk, rstn;
-    
+    logic uart_rx;
+    logic uart_tx;
+
 soc_ahblite x_soc
 (
   .clk   ( clk  ),
-  .rstn  ( rstn )
+  .rstn  ( rstn ),
+
+  .uart_rx  (uart_rx),
+  .uart_tx  (uart_tx)
 );
     initial begin
         rstn = 1'b0;
