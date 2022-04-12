@@ -28,7 +28,7 @@
 module apb_bridge (
   input     logic   clk,
   input     logic   rstn,
-  ahblite_interconnection.ahblite_slave     slave, 
+  ahblite_interconnection.ahblite_slave     ahbl_slave, 
   
   //apb interface
   output    logic [31:0]    paddr,
@@ -69,7 +69,7 @@ logic           psel;
 
 
 
-assign slave.hresp = 0; //always OK
+assign ahbl_slave.hresp = 0; //always OK
 
 parameter IDLE     = 3'b000;
 parameter LATCH    = 3'b001;
@@ -87,12 +87,12 @@ begin
     end
 end
 
-assign idle_latch       = slave.hsel && slave.hwrite;
-assign idle_r_select    = slave.hsel && !slave.hwrite;
-assign enable_latch     = slave.hsel && slave.hwrite;
-assign enable_r_select  = slave.hsel && !slave.hwrite;
+assign idle_latch       = ahbl_slave.hsel && ahbl_slave.hwrite;
+assign idle_r_select    = ahbl_slave.hsel && !ahbl_slave.hwrite;
+assign enable_latch     = ahbl_slave.hsel && ahbl_slave.hwrite;
+assign enable_r_select  = ahbl_slave.hsel && !ahbl_slave.hwrite;
 
-//always @(cur_state[2:0] or slave.hsel or slave.hwrite)
+//always @(cur_state[2:0] or ahbl_slave.hsel or ahbl_slave.hwrite)
 //begin
 // &CombBeg; @86
 always @( enable_r_select
@@ -158,8 +158,8 @@ begin
     end
     else if(nxt_state[2:0]==LATCH) 
     begin
-        haddr_latch[31:0] <= harb_xx_haddr[31:0];
-        hwrite_latch      <= slave.hwrite;
+        haddr_latch[31:0] <= ahbl_slave.haddr[31:0];
+        hwrite_latch      <= ahbl_slave.hwrite;
     end
     else 
     begin
@@ -182,8 +182,8 @@ begin
     end
     else if(nxt_state[2:0]==R_SELECT) 
     begin
-        paddr[31:0]  <= harb_xx_haddr[31:0];
-        pwrite       <= slave.hwrite;
+        paddr[31:0]  <= ahbl_slave.haddr[31:0];
+        pwrite       <= ahbl_slave.hwrite;
     end
     else 
     begin
@@ -200,7 +200,7 @@ begin
     end
     else if(nxt_state[2:0]==W_SELECT) 
     begin
-        pwdata[31:0] <= slave.hwdata[31:0];
+        pwdata[31:0] <= ahbl_slave.hwdata[31:0];
     end
     else 
     begin
@@ -252,23 +252,23 @@ always @(posedge clk or negedge rstn)
 begin
     if(!rstn)
     begin
-        slave.hready <= 1'b1;
+        ahbl_slave.hready <= 1'b1;
     end
     else if(nxt_state[2:0]==LATCH)
     begin
-        slave.hready <= 1'b0;
+        ahbl_slave.hready <= 1'b0;
     end
     else if(nxt_state[2:0]==W_SELECT)
     begin
-        slave.hready <= 1'b0;
+        ahbl_slave.hready <= 1'b0;
     end
     else if(nxt_state[2:0]==R_SELECT)
     begin
-        slave.hready <= 1'b0;
+        ahbl_slave.hready <= 1'b0;
     end
     else
     begin
-        slave.hready <= 1'b1;
+        ahbl_slave.hready <= 1'b1;
     end
 end
 
@@ -314,39 +314,39 @@ begin
     case({busy_s1,busy_s2,busy_s3,busy_s4,busy_s5,busy_s6,busy_s7,busy_s8})
     8'b10000000:
     begin
-        slave.hrdata[31:0] = prdata_s1[31:0];
+        ahbl_slave.hrdata[31:0] = prdata_s1[31:0];
     end
     8'b01000000:
     begin
-        slave.hrdata[31:0] = prdata_s2[31:0];
+        ahbl_slave.hrdata[31:0] = prdata_s2[31:0];
     end
     8'b00100000:
     begin
-        slave.hrdata[31:0] = prdata_s3[31:0];
+        ahbl_slave.hrdata[31:0] = prdata_s3[31:0];
     end
     8'b00010000:
     begin
-        slave.hrdata[31:0] = prdata_s4[31:0];
+        ahbl_slave.hrdata[31:0] = prdata_s4[31:0];
     end
     8'b00001000:
     begin
-        slave.hrdata[31:0] = prdata_s5[31:0];
+        ahbl_slave.hrdata[31:0] = prdata_s5[31:0];
     end
     8'b00000100:
     begin
-        slave.hrdata[31:0] = prdata_s6[31:0];
+        ahbl_slave.hrdata[31:0] = prdata_s6[31:0];
     end
     8'b00000010:
     begin
-        slave.hrdata[31:0] = prdata_s7[31:0];
+        ahbl_slave.hrdata[31:0] = prdata_s7[31:0];
     end
     8'b00000001:
     begin
-        slave.hrdata[31:0] = prdata_s8[31:0];
+        ahbl_slave.hrdata[31:0] = prdata_s8[31:0];
     end
     default:
     begin
-        slave.hrdata[31:0] = 32'b0;
+        ahbl_slave.hrdata[31:0] = 32'b0;
     end
     endcase
 end
