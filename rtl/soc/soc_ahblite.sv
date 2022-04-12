@@ -143,7 +143,7 @@ data_sram x_data_sram
 apb x_apb (
     .clk        (clk        ),
     .rstn       (rstn       ),
-    .ahbl_slave (ahbl_ic1   ),
+    .ahbl_slave (ahbl_ic3   ),
 
     .uart_rx    (uart_rx    ),
     .uart_tx    (uart_tx    ),
