@@ -36,4 +36,4 @@
 ../ibex/ibex_tracer.sv
 ../ibex/prim_clock_gating.v
 
-../rtl/peripheral/uart_top.sv
+../rtl/peripheral/uart/uart_top.sv
