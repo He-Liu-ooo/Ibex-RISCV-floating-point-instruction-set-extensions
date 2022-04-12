@@ -90,7 +90,7 @@ uart_top x_uart_top (
     .uart_rx    (uart_rx),
     .uart_tx    (uart_tx),
 
-    .irq        (uart_irq)
+    .uart_irq   (uart_irq)
 );
 
 // -----------------------------------------------------------
