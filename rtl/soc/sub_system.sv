@@ -142,7 +142,14 @@ x_core
   assign instr_rdata       = inst_dr_valid ? (iahbl_hrdata_i) : 32'h0;
 
   // Data AHB-Lite Bus
-  assign data_gnt      = (data_req&&dahbl_hready_i);
+  logic data_req_d0;
+  always @(posedge clk_cpu or negedge rstn_cpu) begin
+    if (!rstn_cpu)
+      data_req_d0 <= 0;
+    else
+      data_req_d0 <= data_req;
+  end
+  assign data_gnt      = (data_req_d0&&dahbl_hready_i);
   assign data_ac_valid = data_gnt;
   always_comb begin
     case(data_be)
