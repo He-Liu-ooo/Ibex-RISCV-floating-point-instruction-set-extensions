@@ -1,0 +1,63 @@
+Magic 271485
+Revision Verdi_O-2018.09-SP2
+
+; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
+viewPort 0 27 1840 422 154 70
+
+; File list:
+; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
+openDirFile -d / "" "/home/eda/work/AHBL_SOC_IBEX/uart_single_test/tb_uart.fsdb"
+
+; file time scale:
+; fileTimeScale ### s|ms|us|ns|ps
+
+; signal spacing:
+signalSpacing 5
+
+; windowTimeUnit is used for zoom, cursor & marker
+; waveform viewport range
+zoom 0.000000 2019999999.999998
+cursor 0.000000
+marker 0.000000
+
+; user define markers
+; userMarker time_pos marker_name color linestyle
+; visible top row signal index
+top 0
+; marker line index
+markerPos 9
+
+; event list
+; addEvent event_name event_expression
+; curEvent event_name
+
+
+
+COMPLEX_EVENT_BEGIN
+
+
+COMPLEX_EVENT_END
+
+
+
+; toolbar current search type
+; curSTATUS search_type
+curSTATUS ByChange
+
+
+addGroup "rx0"
+activeDirFile "" "/home/eda/work/AHBL_SOC_IBEX/uart_single_test/tb_uart.fsdb"
+addSignal -h 15 /tb/uart/rx0/rstN
+addSignal -h 15 -holdScope pclk
+addSignal -h 15 -holdScope clk
+addSignal -h 15 -holdScope rx_trans_en
+addSignal -h 15 -holdScope configs[5:0]
+addSignal -h 15 -holdScope uart_rx
+addSignal -h 15 -holdScope rx_data[7:0]
+addSignal -h 15 -holdScope state_out
+addSignal -h 15 -holdScope check_error
+addGroup "G2"
+
+; getSignalForm Scope Hierarchy Status
+; active file of getSignalForm
+

@@ -1,0 +1,17 @@
+1. VMware workstation，选择“打开虚拟机”
+**注意，打开时一定选择“我已移动该虚拟机”，否则可能导致虚拟机内部分仿真软件license出问题
+2. 虚拟机账号密码为eda2018，虚拟机内预装了vcs、verdi等linux系统下的仿真软件
+3. IBEX SOC项目位于/home/eda/work/
+
+
+运行IBEX SOC仿真流程：
+1. 打开terminal，切换到home/eda/work/AHBL_SOC_IBEX目录
+2. 运行命令“source ./tools/setup.csh”，配置riscv-gcc编译工具链路径
+3. 进入目录./sw/led/或./sw/uart/，运行makefile编译脚本，生成二进制指令文件供SOC仿真使用：
+	3.1. make distclean，清理当前case下所有编译生成的文件
+	3.2. make all，编译出所有需要的文件，包括*.dis（汇编代码文件）*.vmem（二进制指令文件）等
+4. 切换到./sim/目录，运行makefile编译脚本，进行仿真：
+	4.0. 修改tb文件，将tb中读入的.vmem文件修改为自己编译生成的
+	4.1. make vcs_run，运行vcs仿真，仿真时testbench会把所有波形保存为文件
+	4.2. make verdi， 运行verdi，打开上一步保存的波形文件查看波形
+

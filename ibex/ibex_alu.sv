@@ -7,11 +7,12 @@
  * Arithmetic logic unit
  */
 module ibex_alu #(
-  parameter ibex_pkg::rv32b_e RV32B = ibex_pkg::RV32BNone
+  parameter ibex_pkg::rv32b_e RV32B = ibex_pkg::RV32BNone  // ME: disable the bit-manipulation extension
 ) (
-    input  ibex_pkg::alu_op_e operator_i,
+    input  ibex_pkg::alu_op_e operator_i,  // ME: enumeration of different operators
     input  logic [31:0]       operand_a_i,
     input  logic [31:0]       operand_b_i,
+    input  logic [31:0]       operand_c_i,  // ME: must be a float
 
     input  logic              instr_first_cycle_i,
 
@@ -20,15 +21,20 @@ module ibex_alu #(
 
     input  logic              multdiv_sel_i,
 
+    // RV32F =========================================== //
+    input  ibex_pkg::rounding_mode_e   falu_rounding_mode_i,
+    // RV32F =========================================== //
+
+
     input  logic [31:0]       imd_val_q_i[2],
     output logic [31:0]       imd_val_d_o[2],
     output logic [1:0]        imd_val_we_o,
 
-    output logic [31:0]       adder_result_o,
-    output logic [33:0]       adder_result_ext_o,
+    output logic [31:0]       adder_result_o,      // 是 adder_result_ext_o 的去头去尾
+    output logic [33:0]       adder_result_ext_o,  // 两个操作数无脑加
 
     output logic [31:0]       result_o,
-    output logic              comparison_result_o,
+    output logic              comparison_result_o,    // ME: for PLUSONELT, result_o[0] and comparison_result_o is exactly the same
     output logic              is_equal_result_o
 );
   import ibex_pkg::*;
@@ -45,11 +51,14 @@ module ibex_alu #(
   // Adder //
   ///////////
 
+// Integer=================================================================================================== //
+
   logic        adder_op_b_negate;
   logic [32:0] adder_in_a, adder_in_b;
   logic [31:0] adder_result;
 
-  always_comb begin
+  always_comb begin              // ME: this block means, when the operator is among the below, 
+                                 // we will take every bit of operand b to the opposite
     adder_op_b_negate = 1'b0;
     unique case (operator_i)
       // Adder OPs
@@ -59,6 +68,7 @@ module ibex_alu #(
       ALU_EQ,   ALU_NE,
       ALU_GE,   ALU_GEU,
       ALU_LT,   ALU_LTU,
+      ALU_PLUSONELT,
       ALU_SLT,  ALU_SLTU,
 
       // MinMax OPs (RV32B Ops)
@@ -70,24 +80,73 @@ module ibex_alu #(
   end
 
   // prepare operand a
-  assign adder_in_a    = multdiv_sel_i ? multdiv_operand_a_i : {operand_a_i,1'b1};
+  assign adder_in_a = (operator_i == ALU_PLUSONELT)? {operand_a_i+1,1'b1} : (multdiv_sel_i ? multdiv_operand_a_i : {operand_a_i,1'b1});  
+                                                                                    // ME: append 1 at the tail, because if the operator is comparision,
+                                                                                    // for operand b, each bit takes the opposite, with tail must be 1
+                                                                                    // when a + b, if they are equal, things will be like 0101_0001 + 1010_1111
+                                                                                    // the result must be 10000...0000, we take the lower 32 bits, if all of them are 0
+                                                                                    // a equals b
+
+  // // ME CUSTOM
+  // logic is_custom;
+
+  // always_comb begin
+  //   unique case (operator_i)
+	// ALU_CUSTOM: is_custom = 1'b1;
+  //       default : is_custom = 1'b0;
+  //   endcase
+  // end
+  // // ME
 
   // prepare operand b
-  assign operand_b_neg = {operand_b_i,1'b0} ^ {33{1'b1}};
+  assign operand_b_neg = {operand_b_i,1'b0} ^ {33{1'b1}};  // ME: each bit takes the opposite   tail must be 1
   always_comb begin
     unique case(1'b1)
       multdiv_sel_i:     adder_in_b = multdiv_operand_b_i;
       adder_op_b_negate: adder_in_b = operand_b_neg;
-      default :          adder_in_b = {operand_b_i, 1'b0};
+      //is_custom:         adder_in_b = {operand_b_i << 1, 1'b0};
+      default :          adder_in_b = {operand_b_i, 1'b0};  
     endcase
   end
 
   // actual adder
   assign adder_result_ext_o = $unsigned(adder_in_a) + $unsigned(adder_in_b);
 
-  assign adder_result       = adder_result_ext_o[32:1];
+  assign adder_result       = adder_result_ext_o[32:1];    // ME: ignore last bit
 
   assign adder_result_o     = adder_result;
+
+
+// Integer=================================================================================================== //
+
+// RV32F ==================================================================================================== //
+
+  logic [31:0] f_result;
+  logic        f_comparison_result;
+  logic        f_exception_flag;      // TODO deal with the exception flag
+
+  // now only support FADD/FUSB/FMUL/FDIV
+  ibex_fpu fpu_i (
+    .A_i(operand_a_i),
+    .B_i(operand_b_i),
+    .C_i(operand_c_i),
+    .opcode_i(operator_i),
+    .rounding_mode_i(falu_rounding_mode_i),
+    .result_o(f_result),
+    .comparison_result_o(f_comparison_result),
+    .exception_flag_o(f_exception_flag)
+  );
+
+// RV32F ==================================================================================================== // 
+
+  ///////////////
+  // Shift-Add //
+  ///////////////
+  logic [31:0] shift_five_adder_result;
+  logic [31:0] shift_two_adder_result;
+
+  assign shift_five_adder_result = operand_a_i + (operand_b_i << 5);
+  assign shift_two_adder_result  = operand_a_i + (operand_b_i << 2);
 
   ////////////////
   // Comparison //
@@ -101,6 +160,7 @@ module ibex_alu #(
     unique case (operator_i)
       ALU_GE,
       ALU_LT,
+      ALU_PLUSONELT,
       ALU_SLT,
       // RV32B only
       ALU_MIN,
@@ -110,12 +170,12 @@ module ibex_alu #(
     endcase
   end
 
-  assign is_equal = (adder_result == 32'b0);
+  assign is_equal = (adder_result == 32'b0);   // CONFUSED why not is_equal_result_o = (adder_result == 32'b0)
   assign is_equal_result_o = is_equal;
 
-  // Is greater equal
+  // Is greater equal     CONFUSED what does greater equal mean???
   always_comb begin
-    if ((operand_a_i[31] ^ operand_b_i[31]) == 1'b0) begin
+    if ((operand_a_i[31] ^ operand_b_i[31]) == 1'b0) begin   // ME: if a and b have the same MSB
       is_greater_equal = (adder_result[31] == 1'b0);
     end else begin
       is_greater_equal = operand_a_i[31] ^ (cmp_signed);
@@ -134,7 +194,7 @@ module ibex_alu #(
   // (a[31] == 1 && b[31] == 0) => 0
   // (a[31] == 0 && b[31] == 1) => 1
 
-  // generate comparison result
+  // generate comparison result     NOTE I stop here
   logic cmp_result;
 
   always_comb begin
@@ -144,6 +204,7 @@ module ibex_alu #(
       ALU_GE,   ALU_GEU,
       ALU_MAX,  ALU_MAXU: cmp_result = is_greater_equal; // RV32B only
       ALU_LT,   ALU_LTU,
+      ALU_PLUSONELT,
       ALU_MIN,  ALU_MINU, //RV32B only
       ALU_SLT,  ALU_SLTU: cmp_result = ~is_greater_equal;
 
@@ -1204,7 +1265,29 @@ module ibex_alu #(
       ALU_AND,  ALU_ANDN: result_o = bwlogic_result;
 
       // Adder Operations
-      ALU_ADD,  ALU_SUB: result_o = adder_result;
+      ALU_ADD,  ALU_SUB, ALU_MADD: result_o = adder_result;
+      ALU_ADDRTWO: result_o = shift_two_adder_result;
+      ALU_ADDRFIVE: result_o = shift_five_adder_result;
+      // RV32F ====================================================== //
+      ALU_FADD, ALU_FSUB, ALU_FMUL, ALU_FMADD, ALU_FMSUB, ALU_FNMADD, ALU_FNMSUB, ALU_FADDDIV, ALU_FSUBABS: result_o = f_result;
+      ALU_FEQ, ALU_FLT: result_o = f_comparison_result;
+      ALU_FMAX: begin
+        if (f_comparison_result == 1) begin  // rs1<rs2
+          result_o = operand_b_i;   
+        end
+        else begin // rs1>rs2
+          result_o = operand_a_i;
+        end
+      end
+      ALU_FMIN: begin
+        if (f_comparison_result == 1) begin  // rs1<rs2
+          result_o = operand_a_i;   
+        end
+        else begin // rs1>rs2
+          result_o = operand_b_i;
+        end
+      end
+      // RV32F ====================================================== // 
 
       // Shift Operations
       ALU_SLL,  ALU_SRL,
@@ -1220,6 +1303,9 @@ module ibex_alu #(
       ALU_GE,   ALU_GEU,
       ALU_LT,   ALU_LTU,
       ALU_SLT,  ALU_SLTU: result_o = {31'h0,cmp_result};
+      
+      // Combined instruction
+      ALU_PLUSONELT: result_o = operand_a_i+1;
 
       // MinMax Operations (RV32B)
       ALU_MIN,  ALU_MAX,

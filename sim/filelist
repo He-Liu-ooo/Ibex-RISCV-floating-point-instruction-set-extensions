@@ -7,6 +7,7 @@
 ../rtl/soc/ahblite.sv
 ../rtl/soc/data_sram.sv
 ../rtl/soc/sram_8x1024.sv
+../rtl/soc/sram_32x1024.sv
 ../rtl/soc/decoder.sv
 ../rtl/apb/apb.sv
 ../rtl/apb/apb_bridge.sv
@@ -14,6 +15,7 @@
 ../ibex/ibex_tracer_pkg.sv
 ../ibex/ibex_core.sv
 ../ibex/ibex_alu.sv
+../ibex/ibex_fpu.sv
 ../ibex/ibex_branch_predict.sv
 ../ibex/ibex_compressed_decoder.sv
 ../ibex/ibex_controller.sv
@@ -30,12 +32,22 @@
 ../ibex/ibex_load_store_unit.sv
 ../ibex/ibex_multdiv_fast.sv
 ../ibex/ibex_multdiv_slow.sv
+../ibex/ibex_float_divider.sv
+../ibex/ibex_int2float.sv
 ../ibex/ibex_pmp.sv
 ../ibex/ibex_prefetch_buffer.sv
 ../ibex/ibex_register_file_ff.sv
+../ibex/ibex_fregister_file_ff.sv
 ../ibex/ibex_register_file_fpga.sv
 ../ibex/ibex_wb_stage.sv
 ../ibex/ibex_tracer.sv
 ../ibex/prim_clock_gating.v
 
-../rtl/peripheral/uart/uart_top.sv
+../rtl/clk_10MHz.sv
+../rtl/peripheral/gpio.sv
+../rtl/peripheral/uart/rx.v
+../rtl/peripheral/uart/rx_div.v
+../rtl/peripheral/uart/tx.v
+../rtl/peripheral/uart/tx_div.v
+../rtl/peripheral/uart/uart_top.v
+

@@ -1,0 +1,12 @@
+.text
+.align 1
+.global main
+
+main:
+
+    li x3,  0x04
+    li x4,  0x0a
+    add x2,x3,x4
+    
+
+    

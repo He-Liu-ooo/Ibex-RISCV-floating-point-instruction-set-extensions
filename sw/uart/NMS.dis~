@@ -1,0 +1,1346 @@
+
+NMS.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .vectors:
+
+00000000 <_stack_start-0x10000>:
+  // external interrupts are handled by the same callback
+  // until compiler supports IRQ routines
+  .org 0x00
+  .rept 31
+  nop
+  .endr
+   0:	00000013          	nop
+   4:	00000013          	nop
+   8:	00000013          	nop
+   c:	00000013          	nop
+  10:	00000013          	nop
+  14:	00000013          	nop
+  18:	00000013          	nop
+  1c:	00000013          	nop
+  20:	00000013          	nop
+  24:	00000013          	nop
+  28:	00000013          	nop
+  2c:	00000013          	nop
+  30:	00000013          	nop
+  34:	00000013          	nop
+  38:	00000013          	nop
+  3c:	00000013          	nop
+  40:	00000013          	nop
+  44:	00000013          	nop
+  48:	00000013          	nop
+  4c:	00000013          	nop
+  50:	00000013          	nop
+  54:	00000013          	nop
+  58:	00000013          	nop
+  5c:	00000013          	nop
+  60:	00000013          	nop
+  64:	00000013          	nop
+  68:	00000013          	nop
+  6c:	00000013          	nop
+  70:	00000013          	nop
+  74:	00000013          	nop
+  78:	00000013          	nop
+  jal x0, default_exc_handler
+  7c:	2700006f          	j	2ec <OVER>
+
+  // reset vector
+  .org 0x80
+  jal x0, reset_handler
+  80:	2700006f          	j	2f0 <reset_handler>
+
+  // illegal instruction exception
+  .org 0x84
+  jal x0, default_exc_handler
+  84:	2680006f          	j	2ec <OVER>
+
+  // ecall handler
+  .org 0x88
+  jal x0, default_exc_handler
+  88:	2640006f          	j	2ec <OVER>
+
+Disassembly of section .text:
+
+0000008c <_stext>:
+
+.global main
+
+main:
+
+    alu_custom x5,x1,x2                        
+  8c:	0020828b          	alu_custom	t0,ra,sp
+
+    li x9,0x10000000    # BOX_INFO_BASE_ADDR
+  90:	100004b7          	lui	s1,0x10000
+    li x28,0x10000438   # MAX_BOX_BASE_ADDR
+  94:	10000e37          	lui	t3,0x10000
+  98:	438e0e13          	addi	t3,t3,1080 # 10000438 <_stack_start+0xfff0438>
+    li x30,0x10000460    # RES_BASE_ADDR      # 栈指针用来存放基地址
+  9c:	10000f37          	lui	t5,0x10000
+  a0:	460f0f13          	addi	t5,t5,1120 # 10000460 <_stack_start+0xfff0460>
+
+    li x5,0x0
+  a4:	00000293          	li	t0,0
+    sw x5,0x0(x9)
+  a8:	0054a023          	sw	t0,0(s1) # 10000000 <_stack_start+0xfff0000>
+    flw f0,0x0(x9)
+  ac:	0004a007          	flw	ft0,0(s1)
+    li x5,0x40000000
+  b0:	400002b7          	lui	t0,0x40000
+    sw x5,0x0(x9)
+  b4:	0054a023          	sw	t0,0(s1)
+    flw f8,0x0(x9) 
+  b8:	0004a407          	flw	fs0,0(s1)
+
+    /*x5 do transfer data work*/
+    alu_custom x5,x1,x2
+  bc:	0020828b          	alu_custom	t0,ra,sp
+
+    li x5,0x0
+  c0:	00000293          	li	t0,0
+    sw x5,0x0(x9)
+  c4:	0054a023          	sw	t0,0(s1)
+    li x5,0x3fe00000
+  c8:	3fe002b7          	lui	t0,0x3fe00
+    sw x5,0x4(x9)
+  cc:	0054a223          	sw	t0,4(s1)
+    li x5,0x40a00000
+  d0:	40a002b7          	lui	t0,0x40a00
+    sw x5,0x8(x9)
+  d4:	0054a423          	sw	t0,8(s1)
+    li x5,0x40a00000
+  d8:	40a002b7          	lui	t0,0x40a00
+    sw x5,0xc(x9)
+  dc:	0054a623          	sw	t0,12(s1)
+    li x5,0x425c0000
+  e0:	425c02b7          	lui	t0,0x425c0
+    sw x5,0x10(x9)
+  e4:	0054a823          	sw	t0,16(s1)
+    li x5,0x428c0000
+  e8:	428c02b7          	lui	t0,0x428c0
+    sw x5,0x14(x9)
+  ec:	0054aa23          	sw	t0,20(s1)
+    li x5,0x0
+  f0:	00000293          	li	t0,0
+    sw x5,0x18(x9)
+  f4:	0054ac23          	sw	t0,24(s1)
+    li x5,0x1
+  f8:	00100293          	li	t0,1
+    sw x5,0x1c(x9)
+  fc:	0054ae23          	sw	t0,28(s1)
+
+    alu_custom x5,x1,x2
+ 100:	0020828b          	alu_custom	t0,ra,sp
+    li x5,0x01
+ 104:	00100293          	li	t0,1
+    sw x5,0x20(x9)
+ 108:	0254a023          	sw	t0,32(s1)
+    li x5,0x3fea3d70
+ 10c:	3fea42b7          	lui	t0,0x3fea4
+ 110:	d7028293          	addi	t0,t0,-656 # 3fea3d70 <_stack_start+0x3fe93d70>
+    sw x5,0x24(x9)
+ 114:	0254a223          	sw	t0,36(s1)
+    li x5,0x41200000
+ 118:	412002b7          	lui	t0,0x41200
+    sw x5,0x28(x9)
+ 11c:	0254a423          	sw	t0,40(s1)
+    li x5,0x41200000
+ 120:	412002b7          	lui	t0,0x41200
+    sw x5,0x2c(x9)
+ 124:	0254a623          	sw	t0,44(s1)
+    li x5,0x42700000 
+ 128:	427002b7          	lui	t0,0x42700
+    sw x5,0x30(x9)
+ 12c:	0254a823          	sw	t0,48(s1)
+    li x5,0x42960000
+ 130:	429602b7          	lui	t0,0x42960
+    sw x5,0x34(x9)
+ 134:	0254aa23          	sw	t0,52(s1)
+    li x5,0x0
+ 138:	00000293          	li	t0,0
+    sw x5,0x38(x9)
+ 13c:	0254ac23          	sw	t0,56(s1)
+    li x5,0x1
+ 140:	00100293          	li	t0,1
+    sw x5,0x3c(x9)
+ 144:	0254ae23          	sw	t0,60(s1)
+
+    alu_custom x5,x1,x2
+ 148:	0020828b          	alu_custom	t0,ra,sp
+    li x5,0x02
+ 14c:	00200293          	li	t0,2
+    sw x5,0x40(x9)
+ 150:	0454a023          	sw	t0,64(s1)
+    li x5,0x3fdae147
+ 154:	3fdae2b7          	lui	t0,0x3fdae
+ 158:	14728293          	addi	t0,t0,327 # 3fdae147 <_stack_start+0x3fd9e147>
+    sw x5,0x44(x9)
+ 15c:	0454a223          	sw	t0,68(s1)
+    li x5,0x41700000
+ 160:	417002b7          	lui	t0,0x41700
+    sw x5,0x48(x9)
+ 164:	0454a423          	sw	t0,72(s1)
+    li x5,0x40a00000
+ 168:	40a002b7          	lui	t0,0x40a00
+    sw x5,0x4c(x9)
+ 16c:	0454a623          	sw	t0,76(s1)
+    li x5,0x428c0000
+ 170:	428c02b7          	lui	t0,0x428c0
+    sw x5,0x50(x9)
+ 174:	0454a823          	sw	t0,80(s1)
+    li x5,0x42820000
+ 178:	428202b7          	lui	t0,0x42820
+    sw x5,0x54(x9)
+ 17c:	0454aa23          	sw	t0,84(s1)
+    li x5,0x0
+ 180:	00000293          	li	t0,0
+    sw x5,0x58(x9)
+ 184:	0454ac23          	sw	t0,88(s1)
+    li x5,0x1
+ 188:	00100293          	li	t0,1
+    sw x5,0x5c(x9)
+ 18c:	0454ae23          	sw	t0,92(s1)
+
+    alu_custom x5,x1,x2
+ 190:	0020828b          	alu_custom	t0,ra,sp
+    li x5,0x03
+ 194:	00300293          	li	t0,3
+    sw x5,0x60(x9)
+ 198:	0654a023          	sw	t0,96(s1)
+    li x5,0x3ff33333
+ 19c:	3ff332b7          	lui	t0,0x3ff33
+ 1a0:	33328293          	addi	t0,t0,819 # 3ff33333 <_stack_start+0x3ff23333>
+    sw x5,0x64(x9)
+ 1a4:	0654a223          	sw	t0,100(s1)
+    li x5,0x41200000
+ 1a8:	412002b7          	lui	t0,0x41200
+    sw x5,0x68(x9)
+ 1ac:	0654a423          	sw	t0,104(s1)
+    li x5,0x42be0000
+ 1b0:	42be02b7          	lui	t0,0x42be0
+    sw x5,0x6c(x9)
+ 1b4:	0654a623          	sw	t0,108(s1)
+    li x5,0x420c0000
+ 1b8:	420c02b7          	lui	t0,0x420c0
+    sw x5,0x70(x9)
+ 1bc:	0654a823          	sw	t0,112(s1)
+    li x5,0x42f00000
+ 1c0:	42f002b7          	lui	t0,0x42f00
+    sw x5,0x74(x9)
+ 1c4:	0654aa23          	sw	t0,116(s1)
+    li x5,0x1
+ 1c8:	00100293          	li	t0,1
+    sw x5,0x78(x9)
+ 1cc:	0654ac23          	sw	t0,120(s1)
+    li x5,0x1
+ 1d0:	00100293          	li	t0,1
+    sw x5,0x7c(x9)
+ 1d4:	0654ae23          	sw	t0,124(s1)
+
+    alu_custom x5,x1,x2
+ 1d8:	0020828b          	alu_custom	t0,ra,sp
+    li x5,0x04
+ 1dc:	00400293          	li	t0,4
+    sw x5,0x80(x9)
+ 1e0:	0854a023          	sw	t0,128(s1)
+    li x5,0x3fe66666
+ 1e4:	3fe662b7          	lui	t0,0x3fe66
+ 1e8:	66628293          	addi	t0,t0,1638 # 3fe66666 <_stack_start+0x3fe56666>
+    sw x5,0x84(x9)
+ 1ec:	0854a223          	sw	t0,132(s1)
+    li x5,0x41700000
+ 1f0:	417002b7          	lui	t0,0x41700
+    sw x5,0x88(x9)
+ 1f4:	0854a423          	sw	t0,136(s1)
+    li x5,0x42aa0000 
+ 1f8:	42aa02b7          	lui	t0,0x42aa0
+    sw x5,0x8c(x9)
+ 1fc:	0854a623          	sw	t0,140(s1)
+    li x5,0x42200000
+ 200:	422002b7          	lui	t0,0x42200
+    sw x5,0x90(x9)
+ 204:	0854a823          	sw	t0,144(s1)
+    li x5,0x42e60000
+ 208:	42e602b7          	lui	t0,0x42e60
+    sw x5,0x94(x9)
+ 20c:	0854aa23          	sw	t0,148(s1)
+    li x5,0x1
+ 210:	00100293          	li	t0,1
+    sw x5,0x98(x9)
+ 214:	0854ac23          	sw	t0,152(s1)
+    li x5,0x1
+ 218:	00100293          	li	t0,1
+    sw x5,0x9c(x9)
+ 21c:	0854ae23          	sw	t0,156(s1)
+
+    alu_custom x5,x1,x2
+ 220:	0020828b          	alu_custom	t0,ra,sp
+    /*x5 do transfer data work done*/
+
+    /* constants */
+    li x5,0x5                  /* NUM_BOX=5*/
+ 224:	00500293          	li	t0,5
+    li x6,0x2                  /* NUM_CLASS=2*/
+ 228:	00200313          	li	t1,2
+    li x19,0x20                /* 32 */
+ 22c:	02000993          	li	s3,32
+    li x26,0x4                /* 4 */
+ 230:	00400d13          	li	s10,4
+    li x27,0x2b67             /* 11111 */
+ 234:	00003db7          	lui	s11,0x3
+ 238:	b67d8d93          	addi	s11,s11,-1177 # 2b67 <_min_stack+0xb67>
+    li x31,0x50               /* 80 */
+ 23c:	05000f93          	li	t6,80
+
+00000240 <BEGIN>:
+
+    # find_max
+BEGIN:
+    add x25,x0,x0        # flag=0
+ 240:	00000cb3          	add	s9,zero,zero
+    add x7,x0,x0         # i=0    for(i=0;i<NUM_CLASS;i++)
+ 244:	000003b3          	add	t2,zero,zero
+
+00000248 <BACK2>:
+
+BACK2:
+    mul x18,x7,x26       # i*4
+ 248:	03a38933          	mul	s2,t2,s10
+    add x18,x18,x28      # max_box[i]的绝对地址
+ 24c:	01c90933          	add	s2,s2,t3
+    sw x27,0x0(x18)      # max_box[i]=-1
+ 250:	01b92023          	sw	s11,0(s2)
+    addi x7,x7,1         # i++
+ 254:	00138393          	addi	t2,t2,1
+    blt x7,x6,BACK2      # if i < NUM_CLASS, for loop continues
+ 258:	fe63c8e3          	blt	t2,t1,248 <BACK2>
+# ====================================================================== #
+
+# 否则一个 loop 循环结束，进行下一个 loop 循环
+    add x7,x0,x0         # i=0    for(i=0;i<NUM_BOX;i++)
+ 25c:	000003b3          	add	t2,zero,zero
+
+00000260 <BACK3>:
+BACK3:  
+    mul x18,x7,x19       # i*32
+ 260:	03338933          	mul	s2,t2,s3
+    add x18,x18,x9       # + box_info_base_addr  现在 x18 里装的是 box_info[i].id 的绝对地址
+ 264:	00990933          	add	s2,s2,s1
+    lw x20,0x1c(x18)     # 偏移量为28(dec)   x20 存 box_info[i].valid_bit
+ 268:	01c92a03          	lw	s4,28(s2)
+    lw x22,0x0(x18)      # x22 有box_info[i].id
+ 26c:	00092b03          	lw	s6,0(s2)
+    flw f18,0x04(x18)    # f18=box_info[i].score
+ 270:	00492907          	flw	fs2,4(s2)
+    beq x20,x0,MARK3     # 若 box_info[i].valid_bit 为0，则跳转到 loop 最尾部
+ 274:	020a0863          	beqz	s4,2a4 <MARK3>
+    addi x25,x0,1        # flag=1
+ 278:	00100c93          	li	s9,1
+    lw x21,0x18(x18)     # 偏移量为24(dec)   x21 存 box_info[i].class_
+ 27c:	01892a83          	lw	s5,24(s2)
+    mul x18,x21,x26      # box_info[i]*4
+ 280:	03aa8933          	mul	s2,s5,s10
+    add x18,x28,x18      # +max_box_base_addr  x18存的是 max_box[box_info[i].class_] 的绝对地址
+ 284:	012e0933          	add	s2,t3,s2
+    lw x23,0x0(x18)      # 最大box id
+ 288:	00092b83          	lw	s7,0(s2)
+    mul x18,x23,x19      # 最大 box id * 32
+ 28c:	033b8933          	mul	s2,s7,s3
+    add x18,x18,x9       # box_info[max_box[box_info[i].class_]] 绝对地址
+ 290:	00990933          	add	s2,s2,s1
+    flw f19,0x04(x18)    # f19=box_info[max_box[box_info[i].class_]].score
+ 294:	00492987          	flw	fs3,4(s2)
+    beq x23,x27,MARK51   # if max_box[box_info[i].class_]==-1
+ 298:	03bb8a63          	beq	s7,s11,2cc <MARK51>
+    flt.s x24,f19,f18    # if box_info[max_box[box_info[i].class_]].score<box_info[i].score,x24=1
+ 29c:	a1299c53          	flt.s	s8,fs3,fs2
+    bne x24,x0,MARK52    # if x24=1,jump
+ 2a0:	020c1a63          	bnez	s8,2d4 <MARK52>
+
+000002a4 <MARK3>:
+MARK3:
+    addi x7,x7,1         # i++
+ 2a4:	00138393          	addi	t2,t2,1
+    blt x7,x5,BACK3      # if i < NUM_BOX, for loop continues
+ 2a8:	fa53cce3          	blt	t2,t0,260 <BACK3>
+# ======================================================================= #
+
+    beq x25,x0,MARK61    # if flag=0, jump  
+ 2ac:	020c8c63          	beqz	s9,2e4 <MARK61>
+
+    add x7,x0,x0         # i=0    for(i=0;i<NUM_CLASS;i++)
+ 2b0:	000003b3          	add	t2,zero,zero
+
+000002b4 <BACK4>:
+BACK4:
+    mul x18,x7,x26       # i*4
+ 2b4:	03a38933          	mul	s2,t2,s10
+    add x18,x18,x28      # max_box[i]的绝对地址
+ 2b8:	01c90933          	add	s2,s2,t3
+    lw x23,0x0(x18)      # max_box[i]的值
+ 2bc:	00092b83          	lw	s7,0(s2)
+    beq x23,x27,FORWORD1 # if max_box[i]==-1,jump
+ 2c0:	01bb8263          	beq	s7,s11,2c4 <FORWORD1>
+
+000002c4 <FORWORD1>:
+    # 
+    # 
+    
+FORWORD1:
+    addi x7,x7,1         # i++
+ 2c4:	00138393          	addi	t2,t2,1
+
+000002c8 <BACK61>:
+    # 
+     
+    #
+BACK61:
+    beq x29,x0,OVER          # if find_max() return 0
+ 2c8:	020e8263          	beqz	t4,2ec <OVER>
+
+000002cc <MARK51>:
+#     jal MARK2
+
+
+    
+MARK51:
+    sw x22,0x0(x18)      # box_info[i].id 存到 max_box[box_info[i].class_]里去
+ 2cc:	01692023          	sw	s6,0(s2)
+    jal MARK3
+ 2d0:	fd5ff0ef          	jal	ra,2a4 <MARK3>
+
+000002d4 <MARK52>:
+
+    
+MARK52:
+    mul x18,x21,x26      # box_info[i]*4
+ 2d4:	03aa8933          	mul	s2,s5,s10
+    add x18,x28,x18      # +max_box_base_addr  x18存的是 max_box[box_info[i].class_] 的绝对地址
+ 2d8:	012e0933          	add	s2,t3,s2
+    sw x22,0x0(x18)      # max_box[box_info[i].class_]=box_info[i].id
+ 2dc:	01692023          	sw	s6,0(s2)
+    jal MARK3
+ 2e0:	fc5ff0ef          	jal	ra,2a4 <MARK3>
+
+000002e4 <MARK61>:
+
+    
+MARK61:
+    add x29,x0,x0        # find_max() 返回 0
+ 2e4:	00000eb3          	add	t4,zero,zero
+    jal BACK61
+ 2e8:	fe1ff0ef          	jal	ra,2c8 <BACK61>
+
+000002ec <OVER>:
+  jal x0, default_exc_handler
+ 2ec:	0000006f          	j	2ec <OVER>
+
+000002f0 <reset_handler>:
+  mv  x1, x0
+ 2f0:	00000093          	li	ra,0
+  mv  x2, x1
+ 2f4:	00008113          	mv	sp,ra
+  mv  x3, x1
+ 2f8:	00008193          	mv	gp,ra
+  mv  x4, x1
+ 2fc:	00008213          	mv	tp,ra
+  mv  x5, x1
+ 300:	00008293          	mv	t0,ra
+  mv  x6, x1
+ 304:	00008313          	mv	t1,ra
+  mv  x7, x1
+ 308:	00008393          	mv	t2,ra
+  mv  x8, x1
+ 30c:	00008413          	mv	s0,ra
+  mv  x9, x1
+ 310:	00008493          	mv	s1,ra
+  mv x10, x1
+ 314:	00008513          	mv	a0,ra
+  mv x11, x1
+ 318:	00008593          	mv	a1,ra
+  mv x12, x1
+ 31c:	00008613          	mv	a2,ra
+  mv x13, x1
+ 320:	00008693          	mv	a3,ra
+  mv x14, x1
+ 324:	00008713          	mv	a4,ra
+  mv x15, x1
+ 328:	00008793          	mv	a5,ra
+  mv x16, x1
+ 32c:	00008813          	mv	a6,ra
+  mv x17, x1
+ 330:	00008893          	mv	a7,ra
+  mv x18, x1
+ 334:	00008913          	mv	s2,ra
+  mv x19, x1
+ 338:	00008993          	mv	s3,ra
+  mv x20, x1
+ 33c:	00008a13          	mv	s4,ra
+  mv x21, x1
+ 340:	00008a93          	mv	s5,ra
+  mv x22, x1
+ 344:	00008b13          	mv	s6,ra
+  mv x23, x1
+ 348:	00008b93          	mv	s7,ra
+  mv x24, x1
+ 34c:	00008c13          	mv	s8,ra
+  mv x25, x1
+ 350:	00008c93          	mv	s9,ra
+  mv x26, x1
+ 354:	00008d13          	mv	s10,ra
+  mv x27, x1
+ 358:	00008d93          	mv	s11,ra
+  mv x28, x1
+ 35c:	00008e13          	mv	t3,ra
+  mv x29, x1
+ 360:	00008e93          	mv	t4,ra
+  mv x30, x1
+ 364:	00008f13          	mv	t5,ra
+  mv x31, x1
+ 368:	00008f93          	mv	t6,ra
+  la   x2, _stack_start
+ 36c:	00010117          	auipc	sp,0x10
+ 370:	c9410113          	addi	sp,sp,-876 # 10000 <_stack_start>
+
+00000374 <_start>:
+  la x26, _bss_start
+ 374:	3a800d13          	li	s10,936
+  la x27, _bss_end
+ 378:	3a800d93          	li	s11,936
+  bge x26, x27, zero_loop_end
+ 37c:	01bd5863          	bge	s10,s11,38c <main_entry>
+
+00000380 <zero_loop>:
+  sw x0, 0(x26)
+ 380:	000d2023          	sw	zero,0(s10)
+  addi x26, x26, 4
+ 384:	004d0d13          	addi	s10,s10,4
+  ble x26, x27, zero_loop
+ 388:	ffaddce3          	bge	s11,s10,380 <zero_loop>
+
+0000038c <main_entry>:
+  addi x10, x0, 0
+ 38c:	00000513          	li	a0,0
+  addi x11, x0, 0
+ 390:	00000593          	li	a1,0
+  jal x1, main
+ 394:	cf9ff0ef          	jal	ra,8c <_stext>
+
+00000398 <__CTOR_LIST__>:
+	...
+
+000003a0 <__CTOR_END__>:
+	...
+
+Disassembly of section .stack:
+
+0000c000 <_stack-0x2000>:
+	...
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+  .endr
+   0:	2841                	jal	90 <_stext+0x4>
+   2:	0000                	unimp
+   4:	7200                	flw	fs0,32(a2)
+   6:	7369                	lui	t1,0xffffa
+   8:	01007663          	bgeu	zero,a6,14 <__DYNAMIC+0x14>
+   c:	001e                	c.slli	zero,0x7
+   e:	0000                	unimp
+  10:	7205                	lui	tp,0xfffe1
+  12:	3376                	fld	ft6,376(sp)
+  14:	6932                	flw	fs2,12(sp)
+  16:	7032                	flw	ft0,44(sp)
+  18:	5f30                	lw	a2,120(a4)
+  1a:	326d                	jal	fffff9c4 <_stack_start+0xfffef9c4>
+  1c:	3070                	fld	fa2,224(s0)
+  1e:	615f 7032 5f30      	0x5f307032615f
+  24:	3266                	fld	ft4,120(sp)
+  26:	3070                	fld	fa2,224(s0)
+	...
+
+Disassembly of section .debug_line:
+
+00000000 <.debug_line>:
+   0:	0391                	addi	t2,t2,4
+   2:	0000                	unimp
+   4:	001c0003          	lb	zero,1(s8)
+   8:	0000                	unimp
+   a:	0101                	addi	sp,sp,0
+   c:	000d0efb          	0xd0efb
+  10:	0101                	addi	sp,sp,0
+  12:	0101                	addi	sp,sp,0
+  14:	0000                	unimp
+  16:	0100                	addi	s0,sp,128
+  18:	0000                	unimp
+  1a:	0001                	nop
+  1c:	4d4e                	lw	s10,208(sp)
+  1e:	00732e53          	fadd.s	ft8,ft6,ft7,rdn
+  22:	0000                	unimp
+  24:	0000                	unimp
+  26:	0500                	addi	s0,sp,640
+  28:	8c02                	jr	s8
+  2a:	0000                	unimp
+  2c:	1a00                	addi	s0,sp,304
+  2e:	04090203          	lb	tp,64(s2)
+  32:	0100                	addi	s0,sp,128
+  34:	04090103          	lb	sp,64(s2)
+  38:	0100                	addi	s0,sp,128
+  3a:	08090103          	lb	sp,128(s2)
+  3e:	0100                	addi	s0,sp,128
+  40:	08090203          	lb	tp,128(s2)
+  44:	0100                	addi	s0,sp,128
+  46:	04090103          	lb	sp,64(s2)
+  4a:	0100                	addi	s0,sp,128
+  4c:	04090103          	lb	sp,64(s2)
+  50:	0100                	addi	s0,sp,128
+  52:	04090103          	lb	sp,64(s2)
+  56:	0100                	addi	s0,sp,128
+  58:	04090103          	lb	sp,64(s2)
+  5c:	0100                	addi	s0,sp,128
+  5e:	04090103          	lb	sp,64(s2)
+  62:	0100                	addi	s0,sp,128
+  64:	04090303          	lb	t1,64(s2)
+  68:	0100                	addi	s0,sp,128
+  6a:	04090203          	lb	tp,64(s2)
+  6e:	0100                	addi	s0,sp,128
+  70:	04090103          	lb	sp,64(s2)
+  74:	0100                	addi	s0,sp,128
+  76:	04090103          	lb	sp,64(s2)
+  7a:	0100                	addi	s0,sp,128
+  jal x0, default_exc_handler
+  7c:	04090103          	lb	sp,64(s2)
+  jal x0, reset_handler
+  80:	0100                	addi	s0,sp,128
+  82:	04090103          	lb	sp,64(s2)
+  jal x0, default_exc_handler
+  86:	0100                	addi	s0,sp,128
+  jal x0, default_exc_handler
+  88:	04090103          	lb	sp,64(s2)
+    alu_custom x5,x1,x2                        
+  8c:	0100                	addi	s0,sp,128
+  8e:	04090103          	lb	sp,64(s2)
+    li x9,0x10000000    # BOX_INFO_BASE_ADDR
+  92:	0100                	addi	s0,sp,128
+    li x28,0x10000438   # MAX_BOX_BASE_ADDR
+  94:	04090103          	lb	sp,64(s2)
+  98:	0100                	addi	s0,sp,128
+  9a:	04090103          	lb	sp,64(s2)
+    li x30,0x10000460    # RES_BASE_ADDR      # 栈指针用来存放基地址
+  9e:	0100                	addi	s0,sp,128
+  a0:	04090103          	lb	sp,64(s2)
+    li x5,0x0
+  a4:	0100                	addi	s0,sp,128
+  a6:	04090103          	lb	sp,64(s2)
+    sw x5,0x0(x9)
+  aa:	0100                	addi	s0,sp,128
+    flw f0,0x0(x9)
+  ac:	04090103          	lb	sp,64(s2)
+    li x5,0x40000000
+  b0:	0100                	addi	s0,sp,128
+  b2:	04090103          	lb	sp,64(s2)
+    sw x5,0x0(x9)
+  b6:	0100                	addi	s0,sp,128
+    flw f8,0x0(x9) 
+  b8:	04090103          	lb	sp,64(s2)
+    alu_custom x5,x1,x2
+  bc:	0100                	addi	s0,sp,128
+  be:	04090103          	lb	sp,64(s2)
+    li x5,0x0
+  c2:	0100                	addi	s0,sp,128
+    sw x5,0x0(x9)
+  c4:	04090103          	lb	sp,64(s2)
+    li x5,0x3fe00000
+  c8:	0100                	addi	s0,sp,128
+  ca:	04090203          	lb	tp,64(s2)
+    sw x5,0x4(x9)
+  ce:	0100                	addi	s0,sp,128
+    li x5,0x40a00000
+  d0:	04090103          	lb	sp,64(s2)
+    sw x5,0x8(x9)
+  d4:	0100                	addi	s0,sp,128
+  d6:	04090103          	lb	sp,64(s2)
+    li x5,0x40a00000
+  da:	0100                	addi	s0,sp,128
+    sw x5,0xc(x9)
+  dc:	04090103          	lb	sp,64(s2)
+    li x5,0x425c0000
+  e0:	0100                	addi	s0,sp,128
+  e2:	08090103          	lb	sp,128(s2)
+    sw x5,0x10(x9)
+  e6:	0100                	addi	s0,sp,128
+    li x5,0x428c0000
+  e8:	04090103          	lb	sp,64(s2)
+    sw x5,0x14(x9)
+  ec:	0100                	addi	s0,sp,128
+  ee:	04090103          	lb	sp,64(s2)
+    li x5,0x0
+  f2:	0100                	addi	s0,sp,128
+    sw x5,0x18(x9)
+  f4:	04090103          	lb	sp,64(s2)
+    li x5,0x1
+  f8:	0100                	addi	s0,sp,128
+  fa:	04090103          	lb	sp,64(s2)
+    sw x5,0x1c(x9)
+  fe:	0100                	addi	s0,sp,128
+    alu_custom x5,x1,x2
+ 100:	04090103          	lb	sp,64(s2)
+    li x5,0x01
+ 104:	0100                	addi	s0,sp,128
+ 106:	04090103          	lb	sp,64(s2)
+    sw x5,0x20(x9)
+ 10a:	0100                	addi	s0,sp,128
+    li x5,0x3fea3d70
+ 10c:	04090103          	lb	sp,64(s2)
+ 110:	0100                	addi	s0,sp,128
+ 112:	04090103          	lb	sp,64(s2)
+    sw x5,0x24(x9)
+ 116:	0100                	addi	s0,sp,128
+    li x5,0x41200000
+ 118:	04090103          	lb	sp,64(s2)
+    sw x5,0x28(x9)
+ 11c:	0100                	addi	s0,sp,128
+ 11e:	04090103          	lb	sp,64(s2)
+    li x5,0x41200000
+ 122:	0100                	addi	s0,sp,128
+    sw x5,0x2c(x9)
+ 124:	04090103          	lb	sp,64(s2)
+    li x5,0x42700000 
+ 128:	0100                	addi	s0,sp,128
+ 12a:	04090103          	lb	sp,64(s2)
+    sw x5,0x30(x9)
+ 12e:	0100                	addi	s0,sp,128
+    li x5,0x42960000
+ 130:	04090203          	lb	tp,64(s2)
+    sw x5,0x34(x9)
+ 134:	0100                	addi	s0,sp,128
+ 136:	04090103          	lb	sp,64(s2)
+    li x5,0x0
+ 13a:	0100                	addi	s0,sp,128
+    sw x5,0x38(x9)
+ 13c:	04090103          	lb	sp,64(s2)
+    li x5,0x1
+ 140:	0100                	addi	s0,sp,128
+ 142:	04090103          	lb	sp,64(s2)
+    sw x5,0x3c(x9)
+ 146:	0100                	addi	s0,sp,128
+    alu_custom x5,x1,x2
+ 148:	08090103          	lb	sp,128(s2)
+    li x5,0x02
+ 14c:	0100                	addi	s0,sp,128
+ 14e:	04090103          	lb	sp,64(s2)
+    sw x5,0x40(x9)
+ 152:	0100                	addi	s0,sp,128
+    li x5,0x3fdae147
+ 154:	04090103          	lb	sp,64(s2)
+ 158:	0100                	addi	s0,sp,128
+ 15a:	04090103          	lb	sp,64(s2)
+    sw x5,0x44(x9)
+ 15e:	0100                	addi	s0,sp,128
+    li x5,0x41700000
+ 160:	04090103          	lb	sp,64(s2)
+    sw x5,0x48(x9)
+ 164:	0100                	addi	s0,sp,128
+ 166:	04090103          	lb	sp,64(s2)
+    li x5,0x40a00000
+ 16a:	0100                	addi	s0,sp,128
+    sw x5,0x4c(x9)
+ 16c:	04090103          	lb	sp,64(s2)
+    li x5,0x428c0000
+ 170:	0100                	addi	s0,sp,128
+ 172:	04090103          	lb	sp,64(s2)
+    sw x5,0x50(x9)
+ 176:	0100                	addi	s0,sp,128
+    li x5,0x42820000
+ 178:	04090103          	lb	sp,64(s2)
+    sw x5,0x54(x9)
+ 17c:	0100                	addi	s0,sp,128
+ 17e:	04090103          	lb	sp,64(s2)
+    li x5,0x0
+ 182:	0100                	addi	s0,sp,128
+    sw x5,0x58(x9)
+ 184:	04090103          	lb	sp,64(s2)
+    li x5,0x1
+ 188:	0100                	addi	s0,sp,128
+ 18a:	04090103          	lb	sp,64(s2)
+    sw x5,0x5c(x9)
+ 18e:	0100                	addi	s0,sp,128
+    alu_custom x5,x1,x2
+ 190:	04090103          	lb	sp,64(s2)
+    li x5,0x03
+ 194:	0100                	addi	s0,sp,128
+ 196:	04090203          	lb	tp,64(s2)
+    sw x5,0x60(x9)
+ 19a:	0100                	addi	s0,sp,128
+    li x5,0x3ff33333
+ 19c:	04090103          	lb	sp,64(s2)
+ 1a0:	0100                	addi	s0,sp,128
+ 1a2:	04090103          	lb	sp,64(s2)
+    sw x5,0x64(x9)
+ 1a6:	0100                	addi	s0,sp,128
+    li x5,0x41200000
+ 1a8:	04090103          	lb	sp,64(s2)
+    sw x5,0x68(x9)
+ 1ac:	0100                	addi	s0,sp,128
+ 1ae:	08090103          	lb	sp,128(s2)
+    li x5,0x42be0000
+ 1b2:	0100                	addi	s0,sp,128
+    sw x5,0x6c(x9)
+ 1b4:	04090103          	lb	sp,64(s2)
+    li x5,0x420c0000
+ 1b8:	0100                	addi	s0,sp,128
+ 1ba:	04090103          	lb	sp,64(s2)
+    sw x5,0x70(x9)
+ 1be:	0100                	addi	s0,sp,128
+    li x5,0x42f00000
+ 1c0:	04090103          	lb	sp,64(s2)
+    sw x5,0x74(x9)
+ 1c4:	0100                	addi	s0,sp,128
+ 1c6:	04090103          	lb	sp,64(s2)
+    li x5,0x1
+ 1ca:	0100                	addi	s0,sp,128
+    sw x5,0x78(x9)
+ 1cc:	04090103          	lb	sp,64(s2)
+    li x5,0x1
+ 1d0:	0100                	addi	s0,sp,128
+ 1d2:	04090103          	lb	sp,64(s2)
+    sw x5,0x7c(x9)
+ 1d6:	0100                	addi	s0,sp,128
+    alu_custom x5,x1,x2
+ 1d8:	04090103          	lb	sp,64(s2)
+    li x5,0x04
+ 1dc:	0100                	addi	s0,sp,128
+ 1de:	04090103          	lb	sp,64(s2)
+    sw x5,0x80(x9)
+ 1e2:	0100                	addi	s0,sp,128
+    li x5,0x3fe66666
+ 1e4:	04090103          	lb	sp,64(s2)
+ 1e8:	0100                	addi	s0,sp,128
+ 1ea:	04090103          	lb	sp,64(s2)
+    sw x5,0x84(x9)
+ 1ee:	0100                	addi	s0,sp,128
+    li x5,0x41700000
+ 1f0:	04090103          	lb	sp,64(s2)
+    sw x5,0x88(x9)
+ 1f4:	0100                	addi	s0,sp,128
+ 1f6:	04090103          	lb	sp,64(s2)
+    li x5,0x42aa0000 
+ 1fa:	0100                	addi	s0,sp,128
+    sw x5,0x8c(x9)
+ 1fc:	04090203          	lb	tp,64(s2)
+    li x5,0x42200000
+ 200:	0100                	addi	s0,sp,128
+ 202:	04090103          	lb	sp,64(s2)
+    sw x5,0x90(x9)
+ 206:	0100                	addi	s0,sp,128
+    li x5,0x42e60000
+ 208:	04090103          	lb	sp,64(s2)
+    sw x5,0x94(x9)
+ 20c:	0100                	addi	s0,sp,128
+ 20e:	04090103          	lb	sp,64(s2)
+    li x5,0x1
+ 212:	0100                	addi	s0,sp,128
+    sw x5,0x98(x9)
+ 214:	08090103          	lb	sp,128(s2)
+    li x5,0x1
+ 218:	0100                	addi	s0,sp,128
+ 21a:	04090103          	lb	sp,64(s2)
+    sw x5,0x9c(x9)
+ 21e:	0100                	addi	s0,sp,128
+    alu_custom x5,x1,x2
+ 220:	04090103          	lb	sp,64(s2)
+    li x5,0x5                  /* NUM_BOX=5*/
+ 224:	0100                	addi	s0,sp,128
+ 226:	04090103          	lb	sp,64(s2)
+    li x6,0x2                  /* NUM_CLASS=2*/
+ 22a:	0100                	addi	s0,sp,128
+    li x19,0x20                /* 32 */
+ 22c:	04090103          	lb	sp,64(s2)
+    li x26,0x4                /* 4 */
+ 230:	0100                	addi	s0,sp,128
+ 232:	04090103          	lb	sp,64(s2)
+    li x27,0x2b67             /* 11111 */
+ 236:	0100                	addi	s0,sp,128
+ 238:	04090103          	lb	sp,64(s2)
+    li x31,0x50               /* 80 */
+ 23c:	0100                	addi	s0,sp,128
+ 23e:	04090103          	lb	sp,64(s2)
+    add x25,x0,x0        # flag=0
+ 242:	0100                	addi	s0,sp,128
+    add x7,x0,x0         # i=0    for(i=0;i<NUM_CLASS;i++)
+ 244:	04090103          	lb	sp,64(s2)
+    mul x18,x7,x26       # i*4
+ 248:	0100                	addi	s0,sp,128
+ 24a:	04090103          	lb	sp,64(s2)
+    add x18,x18,x28      # max_box[i]的绝对地址
+ 24e:	0100                	addi	s0,sp,128
+    sw x27,0x0(x18)      # max_box[i]=-1
+ 250:	04090103          	lb	sp,64(s2)
+    addi x7,x7,1         # i++
+ 254:	0100                	addi	s0,sp,128
+ 256:	04090103          	lb	sp,64(s2)
+    blt x7,x6,BACK2      # if i < NUM_CLASS, for loop continues
+ 25a:	0100                	addi	s0,sp,128
+    add x7,x0,x0         # i=0    for(i=0;i<NUM_BOX;i++)
+ 25c:	04090103          	lb	sp,64(s2)
+    mul x18,x7,x19       # i*32
+ 260:	0100                	addi	s0,sp,128
+ 262:	04090203          	lb	tp,64(s2)
+    add x18,x18,x9       # + box_info_base_addr  现在 x18 里装的是 box_info[i].id 的绝对地址
+ 266:	0100                	addi	s0,sp,128
+    lw x20,0x1c(x18)     # 偏移量为28(dec)   x20 存 box_info[i].valid_bit
+ 268:	04090403          	lb	s0,64(s2)
+    lw x22,0x0(x18)      # x22 有box_info[i].id
+ 26c:	0100                	addi	s0,sp,128
+ 26e:	04090103          	lb	sp,64(s2)
+    flw f18,0x04(x18)    # f18=box_info[i].score
+ 272:	0100                	addi	s0,sp,128
+    beq x20,x0,MARK3     # 若 box_info[i].valid_bit 为0，则跳转到 loop 最尾部
+ 274:	04090103          	lb	sp,64(s2)
+    addi x25,x0,1        # flag=1
+ 278:	0100                	addi	s0,sp,128
+ 27a:	04090103          	lb	sp,64(s2)
+    lw x21,0x18(x18)     # 偏移量为24(dec)   x21 存 box_info[i].class_
+ 27e:	0100                	addi	s0,sp,128
+    mul x18,x21,x26      # box_info[i]*4
+ 280:	04090103          	lb	sp,64(s2)
+    add x18,x28,x18      # +max_box_base_addr  x18存的是 max_box[box_info[i].class_] 的绝对地址
+ 284:	0100                	addi	s0,sp,128
+ 286:	08090103          	lb	sp,128(s2)
+    lw x23,0x0(x18)      # 最大box id
+ 28a:	0100                	addi	s0,sp,128
+    mul x18,x23,x19      # 最大 box id * 32
+ 28c:	04090403          	lb	s0,64(s2)
+    add x18,x18,x9       # box_info[max_box[box_info[i].class_]] 绝对地址
+ 290:	0100                	addi	s0,sp,128
+ 292:	04090103          	lb	sp,64(s2)
+    flw f19,0x04(x18)    # f19=box_info[max_box[box_info[i].class_]].score
+ 296:	0100                	addi	s0,sp,128
+    beq x23,x27,MARK51   # if max_box[box_info[i].class_]==-1
+ 298:	04090303          	lb	t1,64(s2)
+    flt.s x24,f19,f18    # if box_info[max_box[box_info[i].class_]].score<box_info[i].score,x24=1
+ 29c:	0100                	addi	s0,sp,128
+ 29e:	04090103          	lb	sp,64(s2)
+    bne x24,x0,MARK52    # if x24=1,jump
+ 2a2:	0100                	addi	s0,sp,128
+    addi x7,x7,1         # i++
+ 2a4:	04090103          	lb	sp,64(s2)
+    blt x7,x5,BACK3      # if i < NUM_BOX, for loop continues
+ 2a8:	0100                	addi	s0,sp,128
+ 2aa:	04090103          	lb	sp,64(s2)
+    beq x25,x0,MARK61    # if flag=0, jump  
+ 2ae:	0100                	addi	s0,sp,128
+    add x7,x0,x0         # i=0    for(i=0;i<NUM_CLASS;i++)
+ 2b0:	04090103          	lb	sp,64(s2)
+    mul x18,x7,x26       # i*4
+ 2b4:	0100                	addi	s0,sp,128
+ 2b6:	04090403          	lb	s0,64(s2)
+    add x18,x18,x28      # max_box[i]的绝对地址
+ 2ba:	0100                	addi	s0,sp,128
+    lw x23,0x0(x18)      # max_box[i]的值
+ 2bc:	04090203          	lb	tp,64(s2)
+    beq x23,x27,FORWORD1 # if max_box[i]==-1,jump
+ 2c0:	0100                	addi	s0,sp,128
+ 2c2:	04090103          	lb	sp,64(s2)
+    addi x7,x7,1         # i++
+ 2c6:	0100                	addi	s0,sp,128
+    beq x29,x0,OVER          # if find_max() return 0
+ 2c8:	04090103          	lb	sp,64(s2)
+    sw x22,0x0(x18)      # box_info[i].id 存到 max_box[box_info[i].class_]里去
+ 2cc:	0100                	addi	s0,sp,128
+ 2ce:	04090103          	lb	sp,64(s2)
+    jal MARK3
+ 2d2:	0100                	addi	s0,sp,128
+    mul x18,x21,x26      # box_info[i]*4
+ 2d4:	04090103          	lb	sp,64(s2)
+    add x18,x28,x18      # +max_box_base_addr  x18存的是 max_box[box_info[i].class_] 的绝对地址
+ 2d8:	0100                	addi	s0,sp,128
+ 2da:	04090103          	lb	sp,64(s2)
+    sw x22,0x0(x18)      # max_box[box_info[i].class_]=box_info[i].id
+ 2de:	0100                	addi	s0,sp,128
+    jal MARK3
+ 2e0:	04090103          	lb	sp,64(s2)
+    add x29,x0,x0        # find_max() 返回 0
+ 2e4:	0100                	addi	s0,sp,128
+ 2e6:	04090103          	lb	sp,64(s2)
+    jal BACK61
+ 2ea:	0100                	addi	s0,sp,128
+  jal x0, default_exc_handler
+ 2ec:	04090103          	lb	sp,64(s2)
+  mv  x1, x0
+ 2f0:	0100                	addi	s0,sp,128
+ 2f2:	04090103          	lb	sp,64(s2)
+  mv  x2, x1
+ 2f6:	0100                	addi	s0,sp,128
+  mv  x3, x1
+ 2f8:	04090103          	lb	sp,64(s2)
+  mv  x4, x1
+ 2fc:	0100                	addi	s0,sp,128
+ 2fe:	04090103          	lb	sp,64(s2)
+  mv  x5, x1
+ 302:	0100                	addi	s0,sp,128
+  mv  x6, x1
+ 304:	04090103          	lb	sp,64(s2)
+  mv  x7, x1
+ 308:	0100                	addi	s0,sp,128
+ 30a:	04090103          	lb	sp,64(s2)
+  mv  x8, x1
+ 30e:	0100                	addi	s0,sp,128
+  mv  x9, x1
+ 310:	04090103          	lb	sp,64(s2)
+  mv x10, x1
+ 314:	0100                	addi	s0,sp,128
+ 316:	04090103          	lb	sp,64(s2)
+  mv x11, x1
+ 31a:	0100                	addi	s0,sp,128
+  mv x12, x1
+ 31c:	04090103          	lb	sp,64(s2)
+  mv x13, x1
+ 320:	0100                	addi	s0,sp,128
+ 322:	04090203          	lb	tp,64(s2)
+  mv x14, x1
+ 326:	0100                	addi	s0,sp,128
+  mv x15, x1
+ 328:	04090103          	lb	sp,64(s2)
+  mv x16, x1
+ 32c:	0100                	addi	s0,sp,128
+ 32e:	04090303          	lb	t1,64(s2)
+  mv x17, x1
+ 332:	0100                	addi	s0,sp,128
+  mv x18, x1
+ 334:	04090203          	lb	tp,64(s2)
+  mv x19, x1
+ 338:	0100                	addi	s0,sp,128
+ 33a:	04090203          	lb	tp,64(s2)
+  mv x20, x1
+ 33e:	0100                	addi	s0,sp,128
+  mv x21, x1
+ 340:	04090103          	lb	sp,64(s2)
+  mv x22, x1
+ 344:	0100                	addi	s0,sp,128
+ 346:	04090103          	lb	sp,64(s2)
+  mv x23, x1
+ 34a:	0100                	addi	s0,sp,128
+  mv x24, x1
+ 34c:	04090103          	lb	sp,64(s2)
+  mv x25, x1
+ 350:	0100                	addi	s0,sp,128
+ 352:	04090503          	lb	a0,64(s2)
+  mv x26, x1
+ 356:	0100                	addi	s0,sp,128
+  mv x27, x1
+ 358:	04090503          	lb	a0,64(s2)
+  mv x28, x1
+ 35c:	0100                	addi	s0,sp,128
+ 35e:	0901cb03          	lbu	s6,144(gp)
+  mv x29, x1
+ 362:	0004                	0x4
+  mv x30, x1
+ 364:	0301                	addi	t1,t1,0
+ 366:	0901                	addi	s2,s2,0
+  mv x31, x1
+ 368:	0004                	0x4
+ 36a:	0301                	addi	t1,t1,0
+  la   x2, _stack_start
+ 36c:	0904                	addi	s1,sp,144
+ 36e:	0004                	0x4
+ 370:	0301                	addi	t1,t1,0
+ 372:	0901                	addi	s2,s2,0
+  la x26, _bss_start
+ 374:	0004                	0x4
+ 376:	0301                	addi	t1,t1,0
+  la x27, _bss_end
+ 378:	0901                	addi	s2,s2,0
+ 37a:	0004                	0x4
+  bge x26, x27, zero_loop_end
+ 37c:	0301                	addi	t1,t1,0
+ 37e:	0901                	addi	s2,s2,0
+  sw x0, 0(x26)
+ 380:	0004                	0x4
+ 382:	0301                	addi	t1,t1,0
+  addi x26, x26, 4
+ 384:	0904                	addi	s1,sp,144
+ 386:	0004                	0x4
+  ble x26, x27, zero_loop
+ 388:	0301                	addi	t1,t1,0
+ 38a:	0901                	addi	s2,s2,0
+  addi x10, x0, 0
+ 38c:	0004                	0x4
+ 38e:	0901                	addi	s2,s2,0
+  addi x11, x0, 0
+ 390:	0004                	0x4
+ 392:	0100                	addi	s0,sp,128
+  jal x1, main
+ 394:	5001                	c.li	zero,-32
+ 396:	0001                	nop
+ 398:	0300                	addi	s0,sp,384
+ 39a:	1d00                	addi	s0,sp,688
+ 39c:	0000                	unimp
+ 39e:	0100                	addi	s0,sp,128
+ 3a0:	fb01                	bnez	a4,2b0 <MARK3+0xc>
+ 3a2:	0d0e                	slli	s10,s10,0x3
+ 3a4:	0100                	addi	s0,sp,128
+ 3a6:	0101                	addi	sp,sp,0
+ 3a8:	0001                	nop
+ 3aa:	0000                	unimp
+ 3ac:	0001                	nop
+ 3ae:	0100                	addi	s0,sp,128
+ 3b0:	6300                	flw	fs0,0(a4)
+ 3b2:	7472                	flw	fs0,60(sp)
+ 3b4:	2e30                	fld	fa2,88(a2)
+ 3b6:	00000053          	fadd.s	ft0,ft0,ft0,rne
+ 3ba:	0000                	unimp
+ 3bc:	0500                	addi	s0,sp,640
+ 3be:	ec02                	fsw	ft0,24(sp)
+ 3c0:	0002                	c.slli64	zero
+ 3c2:	1500                	addi	s0,sp,672
+ 3c4:	04090403          	lb	s0,64(s2)
+ 3c8:	0100                	addi	s0,sp,128
+ 3ca:	04090103          	lb	sp,64(s2)
+ 3ce:	0100                	addi	s0,sp,128
+ 3d0:	04090103          	lb	sp,64(s2)
+ 3d4:	0100                	addi	s0,sp,128
+ 3d6:	04090103          	lb	sp,64(s2)
+ 3da:	0100                	addi	s0,sp,128
+ 3dc:	04090103          	lb	sp,64(s2)
+ 3e0:	0100                	addi	s0,sp,128
+ 3e2:	04090103          	lb	sp,64(s2)
+ 3e6:	0100                	addi	s0,sp,128
+ 3e8:	04090103          	lb	sp,64(s2)
+ 3ec:	0100                	addi	s0,sp,128
+ 3ee:	04090103          	lb	sp,64(s2)
+ 3f2:	0100                	addi	s0,sp,128
+ 3f4:	04090103          	lb	sp,64(s2)
+ 3f8:	0100                	addi	s0,sp,128
+ 3fa:	04090103          	lb	sp,64(s2)
+ 3fe:	0100                	addi	s0,sp,128
+ 400:	04090103          	lb	sp,64(s2)
+ 404:	0100                	addi	s0,sp,128
+ 406:	04090103          	lb	sp,64(s2)
+ 40a:	0100                	addi	s0,sp,128
+ 40c:	04090103          	lb	sp,64(s2)
+ 410:	0100                	addi	s0,sp,128
+ 412:	04090103          	lb	sp,64(s2)
+ 416:	0100                	addi	s0,sp,128
+ 418:	04090103          	lb	sp,64(s2)
+ 41c:	0100                	addi	s0,sp,128
+ 41e:	04090103          	lb	sp,64(s2)
+ 422:	0100                	addi	s0,sp,128
+ 424:	04090103          	lb	sp,64(s2)
+ 428:	0100                	addi	s0,sp,128
+ 42a:	04090103          	lb	sp,64(s2)
+ 42e:	0100                	addi	s0,sp,128
+ 430:	04090103          	lb	sp,64(s2)
+ 434:	0100                	addi	s0,sp,128
+ 436:	04090103          	lb	sp,64(s2)
+ 43a:	0100                	addi	s0,sp,128
+ 43c:	04090103          	lb	sp,64(s2)
+ 440:	0100                	addi	s0,sp,128
+ 442:	04090103          	lb	sp,64(s2)
+ 446:	0100                	addi	s0,sp,128
+ 448:	04090103          	lb	sp,64(s2)
+ 44c:	0100                	addi	s0,sp,128
+ 44e:	04090103          	lb	sp,64(s2)
+ 452:	0100                	addi	s0,sp,128
+ 454:	04090103          	lb	sp,64(s2)
+ 458:	0100                	addi	s0,sp,128
+ 45a:	04090103          	lb	sp,64(s2)
+ 45e:	0100                	addi	s0,sp,128
+ 460:	04090103          	lb	sp,64(s2)
+ 464:	0100                	addi	s0,sp,128
+ 466:	04090103          	lb	sp,64(s2)
+ 46a:	0100                	addi	s0,sp,128
+ 46c:	04090103          	lb	sp,64(s2)
+ 470:	0100                	addi	s0,sp,128
+ 472:	04090103          	lb	sp,64(s2)
+ 476:	0100                	addi	s0,sp,128
+ 478:	04090103          	lb	sp,64(s2)
+ 47c:	0100                	addi	s0,sp,128
+ 47e:	04090303          	lb	t1,64(s2)
+ 482:	0100                	addi	s0,sp,128
+ 484:	08090603          	lb	a2,128(s2)
+ 488:	0100                	addi	s0,sp,128
+ 48a:	04090103          	lb	sp,64(s2)
+ 48e:	0100                	addi	s0,sp,128
+ 490:	04090203          	lb	tp,64(s2)
+ 494:	0100                	addi	s0,sp,128
+ 496:	04090303          	lb	t1,64(s2)
+ 49a:	0100                	addi	s0,sp,128
+ 49c:	04090103          	lb	sp,64(s2)
+ 4a0:	0100                	addi	s0,sp,128
+ 4a2:	04090103          	lb	sp,64(s2)
+ 4a6:	0100                	addi	s0,sp,128
+ 4a8:	04090603          	lb	a2,64(s2)
+ 4ac:	0100                	addi	s0,sp,128
+ 4ae:	04090103          	lb	sp,64(s2)
+ 4b2:	0100                	addi	s0,sp,128
+ 4b4:	04090103          	lb	sp,64(s2)
+ 4b8:	0100                	addi	s0,sp,128
+ 4ba:	0409                	addi	s0,s0,2
+ 4bc:	0000                	unimp
+ 4be:	0101                	addi	sp,sp,0
+ 4c0:	0500                	addi	s0,sp,640
+ 4c2:	0002                	c.slli64	zero
+ 4c4:	0000                	unimp
+ 4c6:	0300                	addi	s0,sp,384
+ 4c8:	030100cb          	fnmsub.d	ft1,ft2,fa6,ft0,rne
+ 4cc:	0901                	addi	s2,s2,0
+ 4ce:	007c                	addi	a5,sp,12
+ 4d0:	0301                	addi	t1,t1,0
+ 4d2:	0904                	addi	s1,sp,144
+ 4d4:	0004                	0x4
+ 4d6:	0301                	addi	t1,t1,0
+ 4d8:	0904                	addi	s1,sp,144
+ 4da:	0004                	0x4
+ 4dc:	0301                	addi	t1,t1,0
+ 4de:	0904                	addi	s1,sp,144
+ 4e0:	0004                	0x4
+ 4e2:	0901                	addi	s2,s2,0
+ 4e4:	0004                	0x4
+ 4e6:	0100                	addi	s0,sp,128
+ 4e8:	01              	Address 0x00000000000004e8 is out of bounds.
+
+
+Disassembly of section .debug_info:
+
+00000000 <.debug_info>:
+  .endr
+   0:	0022                	c.slli	zero,0x8
+   2:	0000                	unimp
+   4:	0002                	c.slli64	zero
+   6:	0000                	unimp
+   8:	0000                	unimp
+   a:	0104                	addi	s1,sp,128
+   c:	0000                	unimp
+   e:	0000                	unimp
+  10:	008c                	addi	a1,sp,64
+  12:	0000                	unimp
+  14:	02ec                	addi	a1,sp,332
+  16:	0000                	unimp
+  18:	0000                	unimp
+  1a:	0000                	unimp
+  1c:	0006                	c.slli	zero,0x1
+  1e:	0000                	unimp
+  20:	0030                	addi	a2,sp,8
+  22:	0000                	unimp
+  24:	8001                	c.srli64	s0
+  26:	001e                	c.slli	zero,0x7
+  28:	0000                	unimp
+  2a:	0002                	c.slli64	zero
+  2c:	0014                	0x14
+  2e:	0000                	unimp
+  30:	0104                	addi	s1,sp,128
+  32:	0395                	addi	t2,t2,5
+  34:	0000                	unimp
+  36:	0000                	unimp
+  38:	0000                	unimp
+  3a:	003c                	addi	a5,sp,8
+  3c:	0000                	unimp
+  3e:	0006                	c.slli	zero,0x1
+  40:	0000                	unimp
+  42:	0030                	addi	a2,sp,8
+  44:	0000                	unimp
+  46:	8001                	c.srli64	s0
+
+Disassembly of section .debug_abbrev:
+
+00000000 <.debug_abbrev>:
+   0:	1101                	addi	sp,sp,-32
+   2:	1000                	addi	s0,sp,32
+   4:	1106                	slli	sp,sp,0x21
+   6:	1201                	addi	tp,tp,-32
+   8:	0301                	addi	t1,t1,0
+   a:	1b0e                	slli	s6,s6,0x23
+   c:	250e                	fld	fa0,192(sp)
+   e:	130e                	slli	t1,t1,0x23
+  10:	0005                	c.nop	1
+  12:	0000                	unimp
+  14:	1101                	addi	sp,sp,-32
+  16:	1000                	addi	s0,sp,32
+  18:	5506                	lw	a0,96(sp)
+  1a:	0306                	slli	t1,t1,0x1
+  1c:	1b0e                	slli	s6,s6,0x23
+  1e:	250e                	fld	fa0,192(sp)
+  20:	130e                	slli	t1,t1,0x23
+  22:	0005                	c.nop	1
+	...
+
+Disassembly of section .debug_aranges:
+
+00000000 <.debug_aranges>:
+   0:	001c                	0x1c
+   2:	0000                	unimp
+   4:	0002                	c.slli64	zero
+   6:	0000                	unimp
+   8:	0000                	unimp
+   a:	0004                	0x4
+   c:	0000                	unimp
+   e:	0000                	unimp
+  10:	008c                	addi	a1,sp,64
+  12:	0000                	unimp
+  14:	0260                	addi	s0,sp,268
+	...
+  1e:	0000                	unimp
+  20:	0024                	addi	s1,sp,8
+  22:	0000                	unimp
+  24:	0002                	c.slli64	zero
+  26:	0026                	c.slli	zero,0x9
+  28:	0000                	unimp
+  2a:	0004                	0x4
+  2c:	0000                	unimp
+  2e:	0000                	unimp
+  30:	02ec                	addi	a1,sp,332
+  32:	0000                	unimp
+  34:	00ac                	addi	a1,sp,72
+  36:	0000                	unimp
+  38:	0000                	unimp
+  3a:	0000                	unimp
+  3c:	008c                	addi	a1,sp,64
+	...
+
+Disassembly of section .debug_str:
+
+00000000 <.debug_str>:
+   0:	4d4e                	lw	s10,208(sp)
+   2:	00732e53          	fadd.s	ft8,ft6,ft7,rdn
+   6:	6d6f682f          	0x6d6f682f
+   a:	2f65                	jal	7c2 <__DTOR_END__+0x41a>
+   c:	6465                	lui	s0,0x19
+   e:	2f61                	jal	7a6 <__DTOR_END__+0x3fe>
+  10:	6b726f77          	0x6b726f77
+  14:	63617073          	csrci	0x636,2
+  18:	2f65                	jal	7d0 <__DTOR_END__+0x428>
+  1a:	4841                	li	a6,16
+  1c:	4c42                	lw	s8,16(sp)
+  1e:	535f 434f 495f      	0x495f434f535f
+  24:	4542                	lw	a0,16(sp)
+  26:	2f58                	fld	fa4,152(a4)
+  28:	752f7773          	csrrci	a4,0x752,30
+  2c:	7261                	lui	tp,0xffff8
+  2e:	0074                	addi	a3,sp,12
+  30:	20554e47          	fmsub.s	ft8,fa0,ft5,ft4,rmm
+  34:	5341                	li	t1,-16
+  36:	3220                	fld	fs0,96(a2)
+  38:	332e                	fld	ft6,232(sp)
+  3a:	0035                	c.nop	13
+  3c:	30747263          	bgeu	s0,t2,340 <reset_handler+0x50>
+  40:	532e                	lw	t1,232(sp)
+	...
+
+Disassembly of section .debug_ranges:
+
+00000000 <.debug_ranges>:
+   0:	ffff                	0xffff
+   2:	ffff                	0xffff
+   4:	0000                	unimp
+   6:	0000                	unimp
+   8:	02ec                	addi	a1,sp,332
+   a:	0000                	unimp
+   c:	0398                	addi	a4,sp,448
+   e:	0000                	unimp
+  10:	0000                	unimp
+  12:	0000                	unimp
+  14:	008c                	addi	a1,sp,64
+	...

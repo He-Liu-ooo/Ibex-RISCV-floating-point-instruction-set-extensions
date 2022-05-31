@@ -16,7 +16,10 @@ import system_pkg::*;
   output  logic                    ahbl_hresp
 );
 
-  logic [31:0] sram_mem    [127:0];
+  // logic [31:0] sram_mem    [127:0];
+  // ME
+  logic [31:0] sram_mem    [1023:0];
+  // ME
   logic [2:0]  ahbl_hsize_d0;
   logic        ahbl_hwrite_d0;
   logic [31:0] ahbl_haddr_d0;
@@ -27,8 +30,41 @@ import system_pkg::*;
 
   logic        sram_rd_en;
   logic        sram_data_valid;
-  logic [6:0]  sram_rd_addr;
-  assign sram_rd_addr = ahbl_haddr[8:2];
+ 
+  //logic [6:0]  sram_rd_addr;
+  //assign sram_rd_addr = ahbl_haddr[8:2];
+
+  // ME
+  logic [9:0]  sram_rd_addr;
+  assign sram_rd_addr = ahbl_haddr[11:2];
+  // ME
+  
+  logic [31:0] mem0;
+  logic [31:0] mem1;
+  logic [31:0] mem2;
+  logic [31:0] mem3;
+  logic [31:0] mem4;
+  logic [31:0] mem5;
+  logic [31:0] mem26;
+  logic [31:0] mem27;
+  logic [31:0] mem28;
+  logic [31:0] mem29;
+  logic [31:0] mem30;
+  logic [31:0] mem31;
+
+  assign mem0 = sram_mem[0];
+  assign mem1 = sram_mem[1];
+  assign mem2 = sram_mem[2];
+  assign mem3 = sram_mem[3];
+  assign mem4 = sram_mem[4];
+  assign mem5 = sram_mem[5];
+  assign mem26 = sram_mem[26];
+  assign mem27 = sram_mem[27];
+  assign mem28 = sram_mem[28];
+  assign mem29 = sram_mem[29];
+  assign mem30 = sram_mem[30];
+  assign mem31 = sram_mem[31];
+
 
   always_ff@(posedge clk or negedge rstn) begin
     if(!rstn) begin

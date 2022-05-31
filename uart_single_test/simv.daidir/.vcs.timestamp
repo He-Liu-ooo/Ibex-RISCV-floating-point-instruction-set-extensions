@@ -1,0 +1,107 @@
+0 
+29
++v2k
+-Mamsrun=
+-Masflags=
+-Mcc=gcc
+-Mcfl= -pipe -fPIC -O -I/tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/include
+-Mcplusplus=g++
+-Mcrt0=
+-Mcrtn=
+-Mcsrc=
+-Mexternalobj=
+-Mldflags= -rdynamic
+-Mobjects= /tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/lib/libvirsim.so /tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/lib/liberrorinf.so /tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/lib/libsnpsmalloc.so /tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/lib/libvfs.so
+-Mout=simv
+-Msaverestoreobj=/tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/lib/vcs_save_restore_new.o
+-Msyslibs=/tools/synopsys/verdi/verdi/Verdi_O-2018.09-SP2/share/PLI/VCS/LINUX64/pli.a -ldl
+-Mvcsaceobjs=
+-Mxcflags= -pipe -fPIC -I/tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/include
+-P
+-Xvcs_run_simv=1
+-f file.f
+-fsdb
+-full64
+-gen_obj
+-l
+-picarchive
+-sverilog
+/tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/bin/vcs1
+/tools/synopsys/verdi/verdi/Verdi_O-2018.09-SP2/share/PLI/VCS/LINUX64/verdi.tab
+run.log
+55
+sysc_uni_pwd=/home/eda/work/AHBL_SOC_IBEX/uart_single_test
+XDG_SESSION_COOKIE=52e1ee79dc54cf215e86c2c60000000a-1650073736.239920-1149744553
+XAUTHORITY=/var/run/gdm/auth-for-eda-WQA7gy/database
+WINDOWPATH=1
+VMR_MODE_FLAG=64
+VERDI_HOME=/tools/synopsys/verdi/verdi/Verdi_O-2018.09-SP2
+VCS_TARGET_ARCH=amd64
+VCS_MX_HOME_INTERNAL=1
+VCS_MODE_FLAG=64
+VCS_LOG_FILE=run.log
+VCS_HOME=/tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2
+VCS_DEPTH=0
+VCS_ARG_ADDED_FOR_TMP=1
+VCS_ARCH_OVERRIDE=linux
+VCS_ARCH=linux64
+USERNAME=eda
+UNAME=/bin/uname
+TOOL_HOME=/tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64
+SYNOPSYS=/tools/synopsys
+STA_HOME=/tools/synopsys/startrc/starrc/O-2018.06-SP1
+SSH_AUTH_SOCK=/tmp/keyring-751Ndk/socket.ssh
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+SPYGLASS_HOME=/tools/synopsys/spyglass2016/SpyGlass-L2016.06/SPYGLASS_HOME
+SNOSLMD_LICENSE_FILE=27000@syn-eda
+SESSION_MANAGER=local/unix:@/tmp/.ICE-unix/3113,unix/unix:/tmp/.ICE-unix/3113
+SCRNAME=vcs
+SCRIPT_NAME=vcs
+QTLIB=/usr/lib64/qt-3.3/lib
+QTINC=/usr/lib64/qt-3.3/include
+QTDIR=/usr/lib64/qt-3.3
+PT_HOME=/tools/synopsys/pt/pts/O-2018.06-SP1
+OVA_UUM=0
+ORBIT_SOCKETDIR=/tmp/orbit-eda
+NOVAS_HOME=/tools/synopsys/verdi/verdi/Verdi_O-2018.09-SP2
+LESSOPEN=||/usr/bin/lesspipe.sh %s
+LC_ALL=C
+ICC_HOME=/tools/synopsys/icc/icc/O-2018.06-SP1
+HSPICE_HOME=/tools/synopsys/hspice/hspice/O-2018.09-SP2/hspice
+HISTCONTROL=ignoredups
+G_BROKEN_FILENAMES=1
+GTK_RC_FILES=/etc/gtk/gtkrc:/home/eda/.gtkrc-1.2-gnome2
+GNOME_KEYRING_SOCKET=/tmp/keyring-751Ndk/socket
+GNOME_KEYRING_PID=3103
+GNOME_DESKTOP_SESSION_ID=this-is-deprecated
+GDM_LANG=en_US.UTF-8
+GDM_KEYBOARD_LAYOUT=us
+GDMSESSION=gnome
+FSDB_HOME=/tools/synopsys/verdi/verdi/Verdi_O-2018.09-SP2
+FM_HOME=/tools/synopsys/lc/lc/O-2018.06-SP1
+DVE_HOME=/tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/gui/dve
+DESKTOP_SESSION=gnome
+DC_HOME=/tools/synopsys/dc/syn/O-2018.06-SP1
+DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/dbus-eBlFJy5sQe,guid=a945b04c5c78747335cdc6c80000002d
+CVS_RSH=ssh
+COLORTERM=gnome-terminal
+0
+11
+1649982175 ./uart_common.h
+1650162573 uart_top.v
+1649982175 uart_common.h
+1648780386 tx_div.v
+1649985812 tx.v
+1650162405 tb_uart.v
+1648780394 rx_div.v
+1649985717 rx.v
+1650162568 APB3_BFM.sv
+1650163565 file.f
+1550753332 /tools/synopsys/verdi/verdi/Verdi_O-2018.09-SP2/share/PLI/VCS/LINUX64/verdi.tab
+4
+1551422344 /tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/lib/libvirsim.so
+1551421792 /tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/lib/liberrorinf.so
+1551421768 /tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/lib/libsnpsmalloc.so
+1551421789 /tools/synopsys/vcs-mx/vcs-mx/O-2018.09-SP2/linux64/lib/libvfs.so
+1650163689 simv.daidir
+-1 partitionlib

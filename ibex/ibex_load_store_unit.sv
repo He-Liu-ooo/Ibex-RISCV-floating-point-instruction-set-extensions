@@ -29,17 +29,23 @@ module ibex_load_store_unit
     output logic [31:0]  data_addr_o,
     output logic         data_we_o,
     output logic [3:0]   data_be_o,
-    output logic [31:0]  data_wdata_o,
-    input  logic [31:0]  data_rdata_i,
+    output logic [31:0]  data_wdata_o,         // ME: send data from ID/EX stage to mem
+    input  logic [31:0]  data_rdata_i,         // ME: data from mem
 
     // signals to/from ID/EX stage
     input  logic         lsu_we_i,             // write enable                     -> from ID/EX
+    // RV32F ======================================================= //
+    input ibex_pkg::rv_extension_e   lsu_extension_i,
+    // RV32F ======================================================= //
     input  logic [1:0]   lsu_type_i,           // data type: word, half word, byte -> from ID/EX
     input  logic [31:0]  lsu_wdata_i,          // data to write to memory          -> from ID/EX
     input  logic         lsu_sign_ext_i,       // sign extension                   -> from ID/EX
 
-    output logic [31:0]  lsu_rdata_o,          // requested data                   -> to ID/EX
-    output logic         lsu_rdata_valid_o,
+    output logic [31:0]  lsu_rdata_o,          // requested data, to register file                   -> to ID/EX
+    output logic         lsu_rdata_valid_o,    // ME whether can write integer reg file
+    // RV32F ======================================================= //
+    output logic         lsu_frdata_valid_o,   // ME whether can write float reg file
+    // RV32F ======================================================= //
     input  logic         lsu_req_i,            // data request                     -> from ID/EX
 
     input  logic [31:0]  adder_result_ex_i,    // address computed in ALU          -> from ID/EX
@@ -66,6 +72,8 @@ module ibex_load_store_unit
     output logic         perf_store_o
 );
 
+  import ibex_pkg::*;
+
   logic [31:0]  data_addr;
   logic [31:0]  data_addr_w_aligned;
   logic [31:0]  addr_last_q;
@@ -78,6 +86,9 @@ module ibex_load_store_unit
   logic [1:0]   data_type_q;
   logic         data_sign_ext_q;
   logic         data_we_q;
+  // RV32F ==================================== //
+  rv_extension_e    data_extension_q;     // judge whether the load/store data is integer or float
+  // RV32F ==================================== //
 
   logic [1:0]   data_offset;   // mux control for data to be written to memory
 
@@ -194,15 +205,17 @@ module ibex_load_store_unit
   // registers for transaction control
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      rdata_offset_q  <= 2'h0;
-      data_type_q     <= 2'h0;
-      data_sign_ext_q <= 1'b0;
-      data_we_q       <= 1'b0;
+      rdata_offset_q    <= 2'h0;
+      data_type_q       <= 2'h0;
+      data_sign_ext_q   <= 1'b0;
+      data_we_q         <= 1'b0;
+      data_extension_q  <= I;
     end else if (ctrl_update) begin
-      rdata_offset_q  <= data_offset;
-      data_type_q     <= lsu_type_i;
-      data_sign_ext_q <= lsu_sign_ext_i;
-      data_we_q       <= lsu_we_i;
+      rdata_offset_q   <= data_offset;
+      data_type_q      <= lsu_type_i;
+      data_sign_ext_q  <= lsu_sign_ext_i;
+      data_we_q        <= lsu_we_i;
+      data_extension_q <= lsu_extension_i; 
     end
   end
 
@@ -472,7 +485,10 @@ module ibex_load_store_unit
 
   assign data_or_pmp_err    = lsu_err_q | data_err_i | pmp_err_q;
   assign lsu_resp_valid_o   = (data_rvalid_i | pmp_err_q) & (ls_fsm_cs == IDLE);
-  assign lsu_rdata_valid_o  = (ls_fsm_cs == IDLE) & data_rvalid_i & ~data_or_pmp_err & ~data_we_q;
+  assign lsu_rdata_valid_o  = (ls_fsm_cs == IDLE) & data_rvalid_i & ~data_or_pmp_err & ~data_we_q & (data_extension_q == I);
+  // RV32F ===================================================================================================================== //
+  assign lsu_frdata_valid_o  = (ls_fsm_cs == IDLE) & data_rvalid_i & ~data_or_pmp_err & ~data_we_q & (data_extension_q == F);
+  // RV32F ===================================================================================================================== //
 
   // output to register file
   assign lsu_rdata_o = data_rdata_ext;
@@ -483,7 +499,7 @@ module ibex_load_store_unit
 
   // output to data interface
   assign data_addr_o   = data_addr_w_aligned;
-  assign data_wdata_o  = data_wdata;
+  assign data_wdata_o  = data_wdata;    // 基本来自 lsu_wdata_i
   assign data_we_o     = lsu_we_i;
   assign data_be_o     = data_be;
 

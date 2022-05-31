@@ -1,0 +1,10 @@
+Command Line: /tools/synopsys/verdi/verdi/Verdi_O-2018.09-SP2/platform/LINUXAMD64/bin/Novas -ssf tb_uart.fsdb -2001 -sverilog -f file.f
+uname(Linux syn-eda 2.6.32-754.35.1.el6.x86_64 #1 SMP Sat Nov 7 12:42:14 UTC 2020 x86_64)
+type= DS_SCOPE element= 1 field= 1
+VERILOG tb
+VERILOG uart
+VERILOG rx0
+-----
+second field= DebussyLib
+third field= rx
+au time 1890.344050 4.691287 16.588478 delta 290705408 290705408 total 710246400 710246400

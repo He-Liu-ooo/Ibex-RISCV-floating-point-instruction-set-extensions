@@ -1,0 +1,13 @@
+debImport "-2001" "-sverilog" "uart_top.v"
+debLoadSimResult /home/eda/work/AHBL_SOC_IBEX/uart_single_test/tb_uart.fsdb
+wvCreateWindow
+srcHBSelect "uart_top" -win $_nTrace1
+srcSetScope -win $_nTrace1 "uart_top" -delim "."
+srcHBSelect "uart_top" -win $_nTrace1
+srcHBSelect "uart_top.rx0" -win $_nTrace1
+srcSetScope -win $_nTrace1 "uart_top.rx0" -delim "."
+srcHBSelect "uart_top.rx0" -win $_nTrace1
+srcHBSelect "uart_top" -win $_nTrace1
+srcSetScope -win $_nTrace1 "uart_top" -delim "."
+srcHBSelect "uart_top" -win $_nTrace1
+debExit

@@ -8,6 +8,33 @@
  */
 package ibex_pkg;
 
+// RV32F ================================== //
+
+/////////////////////////
+// Inst Extension Type //
+/////////////////////////
+
+// TODO not fully completed yet
+typedef enum logic [2:0] {
+  I,         // 整数类型的指令
+  M,
+  A,
+  F,
+  D,
+  Q,
+  C
+} rv_extension_e;
+
+typedef enum logic [2:0] {
+  I_MULDIV,
+  F_DIV,
+  F_ADDDIV,
+  INT2FLOAT32,
+  I_ALU
+} arithmetic_sel_e;
+
+// RV32F ================================== //
+
 ////////////////
 // IO Structs //
 ////////////////
@@ -47,17 +74,34 @@ typedef enum integer {
 /////////////
 
 typedef enum logic [6:0] {
-  OPCODE_LOAD     = 7'h03,
-  OPCODE_MISC_MEM = 7'h0f,
-  OPCODE_OP_IMM   = 7'h13,
-  OPCODE_AUIPC    = 7'h17,
-  OPCODE_STORE    = 7'h23,
-  OPCODE_OP       = 7'h33,
-  OPCODE_LUI      = 7'h37,
-  OPCODE_BRANCH   = 7'h63,
-  OPCODE_JALR     = 7'h67,
-  OPCODE_JAL      = 7'h6f,
-  OPCODE_SYSTEM   = 7'h73
+// RV32I ==================================//
+  OPCODE_LOAD     = 7'h03, //000_00 11
+  OPCODE_MISC_MEM = 7'h0f, //000_11 11
+  OPCODE_OP_IMM   = 7'h13, //001_00 11
+  OPCODE_AUIPC    = 7'h17, //001_01 11
+  OPCODE_STORE    = 7'h23, //010_00 11
+  OPCODE_OP       = 7'h33, //011_00 11
+  OPCODE_LUI      = 7'h37, //011_01 11
+  OPCODE_BRANCH   = 7'h63, //110_00 11
+  OPCODE_JALR     = 7'h67, //110_01 11
+  OPCODE_JAL      = 7'h6f, //110_11 11
+  OPCODE_SYSTEM   = 7'h73, //111_00 11
+  // ME
+  OPCODE_INTEGER_EXTENSION  = 7'h0b, //000_1011
+  // ME
+// RV32I ==================================//
+
+// RV32F ==================================//
+  OPCODE_FLOAD    = 7'h07, //000_0111
+  OPCODE_FSTORE   = 7'h27, //010_0111
+  OPCODE_FOP      = 7'h53, //101_0011
+
+  OPCODE_FADDDIV  = 7'h2b, //010_1011
+  OPCODE_FMADD    = 7'h43, //100_0011
+  OPCODE_FMSUB    = 7'h47, //100_0111 
+  OPCODE_FNMSUB   = 7'h4b, //100_1011
+  OPCODE_FNMADD   = 7'h4f //100_1111
+// RV32F ==================================//
 } opcode_e;
 
 
@@ -65,10 +109,14 @@ typedef enum logic [6:0] {
 // ALU operations //
 ////////////////////
 
-typedef enum logic [5:0] {
+typedef enum logic [6:0] {
+// RV32I ================================== //
   // Arithmetics
   ALU_ADD,
   ALU_SUB,
+  // ME
+  ALU_MADD,  // rd = rs1*rs2+rs3
+  // ME
 
   // Logics
   ALU_XOR,
@@ -95,6 +143,7 @@ typedef enum logic [5:0] {
 
   // Comparisons
   ALU_LT,
+  //ALU_PLUSONELT,
   ALU_LTU,
   ALU_GE,
   ALU_GEU,
@@ -162,10 +211,62 @@ typedef enum logic [5:0] {
   ALU_CRC32_H,
   ALU_CRC32C_H,
   ALU_CRC32_W,
-  ALU_CRC32C_W
+  ALU_CRC32C_W,
+// RV32I ================================== //
+
+// RV32F ================================== //
+  // Arithmetics
+  ALU_FADD,
+  ALU_FSUB,
+  ALU_FMUL,
+  ALU_FDIV,
+
+  ALU_FMADD,   
+  ALU_FMSUB,    
+  ALU_FNMSUB,
+  ALU_FNMADD,
+
+  ALU_FADDDIV,  
+
+  ALU_FSUBABS, 
+
+  // Comparision
+  ALU_FMIN,
+  ALU_FMAX,
+  ALU_FLT,
+  ALU_FEQ,
+
+  // Conversion
+  ALU_FCVTSW,
+  
+  // Combine
+  ALU_PLUSONELT,
+
+  // ADDR
+  ALU_ADDRTWO,
+  ALU_ADDRFIVE
+// RV32F ================================== //
 } alu_op_e;
 
-typedef enum logic [1:0] {
+// RV32F ================================== //
+
+///////////////////
+// Rounding mode //
+///////////////////
+
+typedef enum logic [2:0] {
+  RNE,      // Round to Nearest, ties to Even
+  RTZ,      // Round towards Zero
+  RDN,      // Round Down (towards minus infinity)
+  RUP,      // Round Up (towards infinity)
+  RMM,      // Round to Nearest, ties to Max Magnitude
+  DYN       // select dynamic rounding mode
+
+} rounding_mode_e;
+
+// RV32F ================================== //
+
+typedef enum logic [2:0] {
   // Multiplier/divider
   MD_OP_MULL,
   MD_OP_MULH,
@@ -217,8 +318,11 @@ typedef enum logic[1:0] {
 //////////////
 
 // Operand a selection
-typedef enum logic[1:0] {
+typedef enum logic[2:0] {
   OP_A_REG_A,
+  // RV32F ======== //
+  OP_A_FREG_A,
+  // RV32F ======== //
   OP_A_FWD,
   OP_A_CURRPC,
   OP_A_IMM
@@ -231,10 +335,19 @@ typedef enum logic {
 } imm_a_sel_e;
 
 // Operand b selection
-typedef enum logic {
+typedef enum logic [1:0] {
   OP_B_REG_B,
+  // RV32F ======== //
+  OP_B_FREG_B,
+  // RV32F ======== //
   OP_B_IMM
 } op_b_sel_e;
+
+// Operand c selection
+typedef enum logic [1:0] {
+  OP_C_REG_C,
+  OP_C_FREG_C
+} op_c_sel_e;
 
 // Immediate b selection
 typedef enum logic [2:0] {

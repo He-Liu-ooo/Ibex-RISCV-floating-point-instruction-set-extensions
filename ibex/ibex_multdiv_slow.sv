@@ -72,7 +72,7 @@ module ibex_multdiv_slow
   logic        div_by_zero_d, div_by_zero_q;
   logic        multdiv_hold;
   logic        multdiv_en;
-
+  
    // (accum_window_q + op_a_shift_q)
   assign res_adder_l = alu_adder_ext_i[32:0];
    // (accum_window_q + op_a_shift_q)>>1

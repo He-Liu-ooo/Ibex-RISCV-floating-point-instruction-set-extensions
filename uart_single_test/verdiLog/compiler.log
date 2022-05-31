@@ -1,0 +1,25 @@
+*design* DebussyLib (btIdent Verdi_O-2018.09-SP2)
+Command arguments:
+    +define+verilog
+    -2001
+    -sverilog
+    -f file.f
+        APB3_BFM.sv
+        rx.v
+        rx_div.v
+        tb_uart.v
+        tx.v
+        tx_div.v
+        uart_common.h
+        uart_top.v
+
+
+*Warning* macro FINISH redefined from (4) to (5)
+"tx.v", 12: 
+
+*Warning* symbol state_out duplicated
+"tx.v", 40: 
+Highest level modules:
+tb
+
+Total	0 error(s),   2 warning(s)

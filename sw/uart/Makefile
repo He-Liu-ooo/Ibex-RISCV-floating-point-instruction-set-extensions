@@ -4,10 +4,15 @@
 #
 # Generate a baremetal application
 
-PROGRAM ?= uart
+# PROGRAM ?= uart
+#PROGRAM ?= my_uart
+#PROGRAM ?= test_custom
+#PROGRAM ?= test_FLOAD_FSTORE
+PROGRAM ?= NMS
+#PROGRAM ?= test_lwsw
 PROGRAM_CFLAGS = -Wall -g -Os
-ARCH = rv32imc
-# ARCH = rv32im # to disable compressed instructions
+#ARCH = rv32imc
+ARCH = rv32imaf # to disable compressed instructions
 SRCS = $(PROGRAM).c
 
 CC = riscv32-unknown-elf-gcc
@@ -18,7 +23,7 @@ OBJDUMP ?= $(CROSS_COMPILE)objdump
 
 LINKER_SCRIPT ?= link.ld
 CRT ?= crt0.S
-CFLAGS ?= -march=$(ARCH) -mabi=ilp32 -static -mcmodel=medany \
+CFLAGS ?= -march=$(ARCH) -mabi=ilp32f -static -mcmodel=medany \
 	-fvisibility=hidden -nostdlib -nostartfiles $(PROGRAM_CFLAGS)
 
 OBJS := ${SRCS:.c=.o} ${CRT:.S=.o}

@@ -42,6 +42,10 @@ module ibex_decoder #(
 
     input  logic                 illegal_c_insn_i,      // compressed instruction decode failed
 
+    // RV32F ================================================ //
+    input  logic [2:0]           dyn_rounding_mode_i,     // ME: from fcsr
+    // RV32F ================================================ //
+
     // immediates
     output ibex_pkg::imm_a_sel_e  imm_a_mux_sel_o,       // immediate selection for operand a
     output ibex_pkg::imm_b_sel_e  imm_b_mux_sel_o,       // immediate selection for operand b
@@ -56,12 +60,21 @@ module ibex_decoder #(
 
     // register file
     output ibex_pkg::rf_wd_sel_e rf_wdata_sel_o,   // RF write data selection
-    output logic                 rf_we_o,          // write enable for regfile
+    output logic                 rf_we_o,          // write enable for integer regfile
+    // RV32F ==================================================================== //
+    output logic                 frf_we_o,         // write enable for float regfile
+    // RV32F ==================================================================== //
     output logic [4:0]           rf_raddr_a_o,
     output logic [4:0]           rf_raddr_b_o,
     output logic [4:0]           rf_waddr_o,
     output logic                 rf_ren_a_o,          // Instruction reads from RF addr A
     output logic                 rf_ren_b_o,          // Instruction reads from RF addr B
+    // RV32F ============================================== //
+    //output logic                 rf_ren_c_o,          // Instruction reads from RF addr C
+    output logic [4:0]           rf_raddr_c_o,
+    // FIXME
+    // output logic                 rf_ren_c_o,          // Instruction reads from RFR addr C
+    // RV32F ============================================== //
 
     // ALU
     output ibex_pkg::alu_op_e    alu_operator_o,        // ALU operation selection
@@ -69,11 +82,25 @@ module ibex_decoder #(
                                                         // immediate or zero
     output ibex_pkg::op_b_sel_e  alu_op_b_mux_sel_o,    // operand b selection: reg value or
                                                         // immediate
+    // EXTENSION
+    output ibex_pkg::op_c_sel_e  alu_op_c_mux_sel_o,    // operand c selection: ireg value or freg value 
+    // EXTENSION
     output logic                 alu_multicycle_o,      // ternary bitmanip instruction
+
+    // RV32F =================================================================================== //
+    output ibex_pkg::rv_extension_e  extension_o,
+    output ibex_pkg::rounding_mode_e falu_rounding_mode_o,    // FALU operation rounding mode
+    // RV32F =================================================================================== //
+
 
     // MULT & DIV
     output logic                 mult_en_o,             // perform integer multiplication
     output logic                 div_en_o,              // perform integer division or remainder
+    // RV32F ==================================================================================== //
+    output logic                 fdiv_en_o,             // perform float division
+    //output logic                 fdiv_sel_o,
+    output logic                 convert_en_o,
+    // RV32F ==================================================================================== //
     output logic                 mult_sel_o,            // as above but static, for data muxes
     output logic                 div_sel_o,             // as above but static, for data muxes
 
@@ -95,6 +122,7 @@ module ibex_decoder #(
     // jump/branches
     output logic                 jump_in_dec_o,         // jump is being calculated in ALU
     output logic                 branch_in_dec_o
+
 );
 
   import ibex_pkg::*;
@@ -103,6 +131,11 @@ module ibex_decoder #(
   logic        illegal_reg_rv32e;
   logic        csr_illegal;
   logic        rf_we;
+  // RV32F =============== //
+  logic        frf_we;
+  logic        convert_sel_o;
+  logic        fdiv_sel_o;
+  // RV32F =============== //
 
   logic [31:0] instr;
   logic [31:0] instr_alu;
@@ -115,6 +148,10 @@ module ibex_decoder #(
 
   logic        use_rs3_d;
   logic        use_rs3_q;
+
+  // RV32F ====================== //
+  logic        is_rounding_mode;         // whether we should check this inst's rounding mode
+  // RV32F ====================== //
 
   csr_op_e     csr_op;
 
@@ -150,7 +187,7 @@ module ibex_decoder #(
         use_rs3_q <= use_rs3_d;
       end
     end
-  end else begin : gen_no_rs3_flop
+  end else begin : gen_no_rs3_flop  // RV32B == RV32BNone
     logic unused_clk;
     logic unused_rst_n;
 
@@ -168,10 +205,14 @@ module ibex_decoder #(
   assign instr_rs3 = instr[31:27];
   assign rf_raddr_a_o = (use_rs3_q & ~instr_first_cycle_i) ? instr_rs3 : instr_rs1; // rs3 / rs1
   assign rf_raddr_b_o = instr_rs2; // rs2
+  // RV32F ===================================== //
+  assign rf_raddr_c_o = instr_rs3;
+  // RV32F ===================================== //
 
   // destination register
-  assign instr_rd = instr[11:7];
-  assign rf_waddr_o   = instr_rd; // rd
+  assign instr_rd     = instr[11:7];
+  assign rf_waddr_o   = {instr[14:12],instr[6:0]}=={3'b010,7'b0001011} ? instr[19:15] : instr_rd; // rd
+  // ME: if instr is plueonelt, then the destination register is rs1
 
   ////////////////////
   // Register check //
@@ -213,6 +254,9 @@ module ibex_decoder #(
 
     rf_wdata_sel_o        = RF_WD_EX;
     rf_we                 = 1'b0;
+    // RV32F ========================== //
+    frf_we                = 1'b0;
+    // RV32F ========================== //
     rf_ren_a_o            = 1'b0;
     rf_ren_b_o            = 1'b0;
 
@@ -234,8 +278,13 @@ module ibex_decoder #(
 
     opcode                = opcode_e'(instr[6:0]);
 
+    // RV32F ============================= //
+    is_rounding_mode      = 1'b0;
+    // RV32F ============================= //
+
     unique case (opcode)
 
+     // RV32I =================================================================================== //
       ///////////
       // Jumps //
       ///////////
@@ -544,6 +593,37 @@ module ibex_decoder #(
           endcase
         end
       end
+      
+      // ME
+      OPCODE_INTEGER_EXTENSION: begin
+        rf_ren_a_o      = 1'b1;
+        rf_ren_b_o      = 1'b1;
+        unique case (instr[14:12]) 
+          3'b000: begin   // FMADD
+            //rf_ren_c_o      = 1'b1;
+            rf_we           = 1'b1;
+            // 先做 mul, 复用 mul 的控制信号
+            multdiv_operator_o    = MD_OP_MULL;
+            multdiv_signed_mode_o = 2'b00;
+            illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
+          end            
+          3'b001: begin   // ADDRTWO/ADDRFIVE
+            illegal_insn          = 1'b0;
+            rf_we                 = 1'b1;     
+          end
+          3'b010: begin   // PLUSONELT
+            branch_in_dec_o       = 1'b1;
+            illegal_insn          = 1'b0;
+            if (instr_first_cycle_i) begin
+              rf_we               = 1'b1;         // update rs1 is needed
+            end else begin
+              rf_we               = 1'b0;   // next cycle we need to calculate the addr, at the same time write register need to be disabled
+            end
+          end
+          default: illegal_insn = 1'b1;
+        endcase
+      end
+      // ME
 
       /////////////
       // Special //
@@ -625,6 +705,177 @@ module ibex_decoder #(
         end
 
       end
+
+     // RV32I =================================================================================== //
+
+     // RV32F ==================================================== //
+      ////////////////
+      // Load/store //
+      ////////////////
+
+      OPCODE_FSTORE: begin
+        rf_ren_a_o         = 1'b1;
+        rf_ren_b_o         = 1'b1;
+        data_req_o         = 1'b1;
+        data_we_o          = 1'b1;
+
+        if (instr[14]) begin
+          illegal_insn = 1'b1;
+        end
+
+        // store size
+        unique case (instr[13:12])
+          2'b00:   data_type_o  = 2'b10; // sb
+          2'b01:   data_type_o  = 2'b01; // sh
+          2'b10:   data_type_o  = 2'b00; // sw      一般来说都是这个
+          default: illegal_insn = 1'b1;
+        endcase
+      end
+
+      OPCODE_FLOAD: begin
+        rf_ren_a_o          = 1'b1;
+        data_req_o          = 1'b1;
+        data_type_o         = 2'b00;
+
+        // sign/zero extension
+        data_sign_extension_o = ~instr[14];
+
+        // load size
+        unique case (instr[13:12])
+          2'b00: data_type_o = 2'b10; // lb(u)
+          2'b01: data_type_o = 2'b01; // lh(u)
+          2'b10: begin
+            data_type_o = 2'b00;      // lw
+            if (instr[14]) begin
+              illegal_insn = 1'b1;    // lwu does not exist
+            end
+          end
+          default: begin
+            illegal_insn = 1'b1;
+          end
+        endcase
+      end
+       
+      /////////
+      // ALU //
+      /////////
+      OPCODE_FOP: begin  // Register-Register ALU operation
+        rf_ren_a_o      = 1'b1;
+        rf_ren_b_o      = 1'b1;
+        
+
+        // CONFUSED
+        // if ({instr[26], instr[13:12]} == {1'b1, 2'b01}) begin
+        //   illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1; // cmix / cmov / fsl / fsr
+        // end else begin
+        // CONFUSED
+          
+
+          unique case (instr[31:25])
+            // RV32I ALU operations
+            7'b000_0000,                      // FADD
+            7'b000_0100: begin                // FSUB
+              illegal_insn          = (instr[14:12] == 3'b101 || instr[14:12] == 3'b110)? 1'b1 : 1'b0; // CONFUSED
+              is_rounding_mode      = 1'b1;
+              frf_we                = 1'b1;
+            end  
+
+            // RV32M instructions
+            7'b000_1000: begin                // FMUL
+              // multdiv_operator_o    = MD_OP_FMUL;
+              // multdiv_signed_mode_o = 2'b00;  // CONFUSED
+              illegal_insn          = (instr[14:12] == 3'b101 || instr[14:12] == 3'b110)? 1'b1 : 1'b0;  // CONFUSED
+              is_rounding_mode      = 1'b1;
+              frf_we                = 1'b1;
+            end
+            7'b000_1100: begin                // FDIV
+              // multdiv_operator_o    = MD_OP_FDIV;
+              // multdiv_signed_mode_o = 2'b11;  // CONFUSED
+              illegal_insn          = (instr[14:12] == 3'b101 || instr[14:12] == 3'b110)? 1'b1 : 1'b0;   // CONFUSED
+              is_rounding_mode      = 1'b1;
+              frf_we                = 1'b1;
+            end
+	          7'b101_0000: begin
+              unique case (instr[14:12])
+                3'b001,
+                3'b010: begin
+		              illegal_insn          = 1'b0;
+                  is_rounding_mode      = 1'b0;
+                  rf_we                 = 1'b1;   // write integer register
+                end
+                default: ;
+              endcase
+            end   
+            7'b110_1000: begin
+              unique case (instr[24:20])
+                5'b0_0000: begin
+                  is_rounding_mode      = 1'b1;
+                  illegal_insn          = 1'b0;
+                  rf_ren_b_o            = 1'b0;    // 不读 rs2 寄存器
+                  frf_we                = 1'b1;    // 写的是浮点寄存器
+                end
+                5'b0_0001: ;
+                default: illegal_insn   = 1'b1;
+              endcase
+            end 
+            7'b0010100: begin    // FMAX/FMIN
+              illegal_insn          = 1'b0;
+              is_rounding_mode      = 1'b0;
+              frf_we                = 1'b1;
+            end
+            7'b0000010: begin   // FSUBABS
+              frf_we                = 1'b1;
+              is_rounding_mode      = 1'b1;
+            end
+            default: begin
+              illegal_insn = 1'b1;
+            end
+          endcase
+      end
+      
+      // TODO  consider how to arrange illegal_insn
+      // FIXME maybe the four can combine
+      OPCODE_FADDDIV: begin     // TODO we may modify the name in case of a new custom instruction
+        rf_ren_a_o        = 1'b1;
+        rf_ren_b_o        = 1'b1;
+        frf_we            = 1'b1;
+        is_rounding_mode  = 1'b1;
+      end
+
+      OPCODE_FMADD: begin
+        rf_ren_a_o        = 1'b1;
+        rf_ren_b_o        = 1'b1;
+        //rf_ren_c_o        = 1'b1;
+        frf_we            = 1'b1;
+        is_rounding_mode  = 1'b1;
+      end
+
+      OPCODE_FMSUB: begin
+        rf_ren_a_o        = 1'b1;
+        rf_ren_b_o        = 1'b1;
+        //rf_ren_c_o        = 1'b1;
+        frf_we             = 1'b1;
+        is_rounding_mode  = 1'b1;
+      end
+
+      OPCODE_FNMSUB: begin
+        rf_ren_a_o        = 1'b1;
+        rf_ren_b_o        = 1'b1;
+        //rf_ren_c_o        = 1'b1;
+        frf_we             = 1'b1;
+        is_rounding_mode  = 1'b1;
+      end
+
+      OPCODE_FNMADD: begin
+        rf_ren_a_o        = 1'b1;
+        rf_ren_b_o        = 1'b1;
+        //rf_ren_c_o        = 1'b1;
+        frf_we             = 1'b1;
+        is_rounding_mode  = 1'b1;
+      end
+
+     // RV32F ==================================================== //
+
       default: begin
         illegal_insn = 1'b1;
       end
@@ -642,6 +893,7 @@ module ibex_decoder #(
     // these cases are not handled here
     if (illegal_insn) begin
       rf_we           = 1'b0;
+      frf_we          = 1'b0;
       data_req_o      = 1'b0;
       data_we_o       = 1'b0;
       jump_in_dec_o   = 1'b0;
@@ -649,6 +901,28 @@ module ibex_decoder #(
       branch_in_dec_o = 1'b0;
       csr_access_o    = 1'b0;
     end
+
+    if (is_rounding_mode) begin
+      unique case (instr[14:12]) 
+        3'b000: falu_rounding_mode_o = RNE;
+        3'b001: falu_rounding_mode_o = RTZ;
+        3'b010: falu_rounding_mode_o = RDN;
+        3'b011: falu_rounding_mode_o = RUP;
+        3'b100: falu_rounding_mode_o = RMM;
+        3'b111: begin                         // DYN, we look into dyn_rounding_mode
+          unique case (dyn_rounding_mode_i)
+            3'b000: falu_rounding_mode_o = RNE;
+            3'b001: falu_rounding_mode_o = RTZ;
+            3'b010: falu_rounding_mode_o = RDN;
+            3'b011: falu_rounding_mode_o = RUP;
+            3'b100: falu_rounding_mode_o = RMM;
+            default: illegal_insn = 1'b1;
+          endcase
+        end 
+        default: illegal_insn = 1'b1;
+      endcase 
+    end
+
   end
 
   /////////////////////////////
@@ -659,6 +933,7 @@ module ibex_decoder #(
     alu_operator_o     = ALU_SLTU;
     alu_op_a_mux_sel_o = OP_A_IMM;
     alu_op_b_mux_sel_o = OP_B_IMM;
+    alu_op_c_mux_sel_o = OP_C_REG_C;
 
     imm_a_mux_sel_o    = IMM_A_ZERO;
     imm_b_mux_sel_o    = IMM_B_I;
@@ -666,6 +941,9 @@ module ibex_decoder #(
     bt_a_mux_sel_o     = OP_A_CURRPC;
     bt_b_mux_sel_o     = IMM_B_I;
 
+  // RV32F ============================================= //
+    extension_o        = I;             // 默认是整数指令
+  // RV32F ============================================= //
 
     opcode_alu         = opcode_e'(instr_alu[6:0]);
 
@@ -673,9 +951,14 @@ module ibex_decoder #(
     alu_multicycle_o   = 1'b0;
     mult_sel_o         = 1'b0;
     div_sel_o          = 1'b0;
+    // RV32F =================== //
+    fdiv_sel_o         = 1'b0;
+    convert_sel_o      = 1'b0;    // whether this is an int2float conversion instr
+    // RV32F =================== //
 
     unique case (opcode_alu)
 
+// RV32I ==================================================== //
       ///////////
       // Jumps //
       ///////////
@@ -770,7 +1053,7 @@ module ibex_decoder #(
         if (!instr_alu[14]) begin
           // offset from immediate
           imm_b_mux_sel_o     = IMM_B_S;
-          alu_op_b_mux_sel_o  = OP_B_IMM;
+          alu_op_b_mux_sel_o  = OP_B_IMM;   
         end
       end
 
@@ -1086,6 +1369,62 @@ module ibex_decoder #(
         end
       end
 
+      // ME
+      OPCODE_INTEGER_EXTENSION: begin
+        unique case (instr[14:12]) 
+          3'b000: begin   // FMADD
+            alu_op_a_mux_sel_o   = OP_A_REG_A;
+            alu_op_b_mux_sel_o   = OP_B_REG_B;
+
+            alu_op_c_mux_sel_o   = OP_C_REG_C;
+            alu_operator_o       = ALU_MADD;
+            mult_sel_o           = (RV32M == RV32MNone) ? 1'b0 : 1'b1;   // 1
+          end            
+          3'b001: begin     // ADDR2/ADDR5
+            unique case (instr[31:25])
+              7'b000_0000: begin   // ADDRTWO
+                alu_op_a_mux_sel_o   = OP_A_REG_A;
+                alu_op_b_mux_sel_o   = OP_B_REG_B;
+                alu_operator_o       = ALU_ADDRTWO;
+              end
+
+              7'b000_0001: begin   // ADDRFIVE
+                alu_op_a_mux_sel_o   = OP_A_REG_A;
+                alu_op_b_mux_sel_o   = OP_B_REG_B;
+                alu_operator_o       = ALU_ADDRFIVE;
+              end
+            endcase
+          end
+          3'b010: begin     // PLUSONEBLT 
+              alu_op_a_mux_sel_o   = OP_A_REG_A;
+              alu_op_b_mux_sel_o   = OP_B_REG_B;
+              alu_operator_o       = ALU_PLUSONELT;
+
+              if (BranchTargetALU) begin
+                bt_a_mux_sel_o = OP_A_CURRPC;
+                // Not-taken branch will jump to next instruction (used in secure mode)
+                bt_b_mux_sel_o = branch_taken_i ? IMM_B_B : IMM_B_INCR_PC;
+              end
+
+              // Without branch target ALU, a branch is a two-stage operation using the Main ALU in both
+              // stages
+              if (instr_first_cycle_i) begin
+                // First evaluate the branch condition
+                alu_op_a_mux_sel_o  = OP_A_REG_A;
+                alu_op_b_mux_sel_o  = OP_B_REG_B;
+              end else begin
+                // Then calculate jump target
+                alu_op_a_mux_sel_o  = OP_A_CURRPC;
+                alu_op_b_mux_sel_o  = OP_B_IMM;
+                // Not-taken branch will jump to next instruction (used in secure mode)
+                imm_b_mux_sel_o     = branch_taken_i ? IMM_B_B : IMM_B_INCR_PC;
+                alu_operator_o      = ALU_ADD;
+              end
+          end
+        endcase
+      end
+      // ME 
+
       /////////////
       // Special //
       /////////////
@@ -1134,13 +1473,193 @@ module ibex_decoder #(
         end
 
       end
+// RV32I ==================================================== //
+
+// RV32F ==================================================== //
+
+      ////////////////
+      // Load/store //
+      ////////////////
+
+      OPCODE_FSTORE: begin
+        alu_op_a_mux_sel_o = OP_A_REG_A;    // base-reg should be a Integer-reg
+        alu_op_b_mux_sel_o = OP_B_FREG_B;   // src should be a FP-reg
+        alu_operator_o     = ALU_ADD;       // 
+        extension_o        = F;
+
+        if (!instr_alu[14]) begin   // 一般来说都为真，此处 alu_op_b_mux_sel_o 必然要选立即数，用于在 ALU 里实现地址计算
+          // offset from immediate
+          imm_b_mux_sel_o     = IMM_B_S;     // 选择 S-type 指令对应的立即数
+          alu_op_b_mux_sel_o  = OP_B_IMM;    // 选择立即数
+        end
+      end
+
+      OPCODE_FLOAD: begin
+        alu_op_a_mux_sel_o  = OP_A_REG_A;   // base-reg should be a Integer-reg
+        extension_o         = F;
+
+        // offset from immediate
+        alu_operator_o      = ALU_ADD;
+        alu_op_b_mux_sel_o  = OP_B_IMM;     // 操作数b是立即数
+        imm_b_mux_sel_o     = IMM_B_I;      // 选择 S-type 指令的立即数
+      end
+
+      OPCODE_FOP: begin  // Register-Register FALU operation
+        alu_op_a_mux_sel_o = OP_A_FREG_A;
+        alu_op_b_mux_sel_o = OP_B_FREG_B;
+        extension_o        = F;
+
+        // CONFUSED
+        // if (instr_alu[26]) begin
+        //   if (RV32B != RV32BNone) begin
+        //     unique case ({instr_alu[26:25], instr_alu[14:12]})
+        //       {2'b11, 3'b001}: begin
+        //         alu_operator_o   = ALU_CMIX; // cmix
+        //         alu_multicycle_o = 1'b1;
+        //         if (instr_first_cycle_i) begin
+        //           use_rs3_d = 1'b1;
+        //         end else begin
+        //           use_rs3_d = 1'b0;
+        //         end
+        //       end
+        //       {2'b11, 3'b101}: begin
+        //         alu_operator_o   = ALU_CMOV; // cmov
+        //         alu_multicycle_o = 1'b1;
+        //         if (instr_first_cycle_i) begin
+        //           use_rs3_d = 1'b1;
+        //         end else begin
+        //           use_rs3_d = 1'b0;
+        //         end
+        //       end
+        //       {2'b10, 3'b001}: begin
+        //         alu_operator_o   = ALU_FSL;  // fsl
+        //         alu_multicycle_o = 1'b1;
+        //         if (instr_first_cycle_i) begin
+        //           use_rs3_d = 1'b1;
+        //         end else begin
+        //           use_rs3_d = 1'b0;
+        //         end
+        //       end
+        //       {2'b10, 3'b101}: begin
+        //         alu_operator_o   = ALU_FSR;  // fsr
+        //         alu_multicycle_o = 1'b1;
+        //         if (instr_first_cycle_i) begin
+        //           use_rs3_d = 1'b1;
+        //         end else begin
+        //           use_rs3_d = 1'b0;
+        //         end
+        //       end
+        //       default: ;
+        //     endcase
+        //   end
+        // CONFUSED
+        // end else begin
+        unique case (instr_alu[31:25])
+                // RV32F ALU operations
+          7'b000_0000: alu_operator_o = ALU_FADD;   // FAdd
+          7'b000_0100: alu_operator_o = ALU_FSUB;   // FSub
+            
+          // CONFUSED
+          7'b000_1000: begin                        // Fmul
+            alu_operator_o = ALU_FMUL;
+              //mult_sel_o     = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
+          end
+          7'b000_1100: begin                        // Fdiv
+            alu_operator_o = ALU_FDIV;
+            fdiv_sel_o     = 1'b1;
+              //div_sel_o      = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
+          end
+            // CONFUSED
+          7'b110_1000: begin
+            unique case (instr[24:20]) 
+              5'b0_0000: begin
+                alu_operator_o = ALU_FCVTSW;
+                alu_op_a_mux_sel_o = OP_A_REG_A;
+                convert_sel_o = 1'b1;
+              end
+              5'b0_0001:;
+            endcase
+          end
+          7'b0010100: begin
+            unique case (instr[14:12]) 
+              3'b000: alu_operator_o = ALU_FMIN;
+              3'b001: alu_operator_o = ALU_FMAX;
+            endcase
+          end
+          7'b0000010: begin   // FSUBABS
+            alu_operator_o = ALU_FSUBABS;
+          end
+          default: ;
+        endcase
+
+        unique case ({instr[31:25],instr[14:12]})
+            {7'b1010000,3'b001}: alu_operator_o = ALU_FLT;
+            {7'b1010000,3'b010}: alu_operator_o = ALU_FEQ;
+            default:;
+        endcase
+      end
+    
+      OPCODE_FADDDIV: begin
+        alu_op_a_mux_sel_o = OP_A_FREG_A;
+        alu_op_b_mux_sel_o = OP_B_FREG_B;
+        alu_op_c_mux_sel_o = OP_C_FREG_C;
+        extension_o        = F;
+        fdiv_sel_o         = 1'b1;
+        alu_operator_o     = ALU_FADDDIV;
+      end
+
+      OPCODE_FMADD: begin
+        alu_op_a_mux_sel_o = OP_A_FREG_A;
+        alu_op_b_mux_sel_o = OP_B_FREG_B;
+        alu_op_c_mux_sel_o = OP_C_FREG_C;
+        // we dont even need to choose C 'cause this operand must from register file
+        extension_o        = F;
+        alu_operator_o     = ALU_FMADD;
+
+      end
+
+      OPCODE_FMSUB: begin
+        alu_op_a_mux_sel_o = OP_A_FREG_A;
+        alu_op_b_mux_sel_o = OP_B_FREG_B;
+        alu_op_c_mux_sel_o = OP_C_FREG_C;
+        // we dont even need to choose C 'cause this operand must from register file
+        extension_o        = F;
+        alu_operator_o     = ALU_FMSUB;
+
+      end
+
+      OPCODE_FNMSUB: begin
+        alu_op_a_mux_sel_o = OP_A_FREG_A;
+        alu_op_b_mux_sel_o = OP_B_FREG_B;
+        alu_op_c_mux_sel_o = OP_C_FREG_C;
+        // we dont even need to choose C 'cause this operand must from register file
+        extension_o        = F;
+        alu_operator_o     = ALU_FNMSUB;
+
+      end
+
+      OPCODE_FNMADD: begin
+        alu_op_a_mux_sel_o = OP_A_FREG_A;
+        alu_op_b_mux_sel_o = OP_B_FREG_B;
+        alu_op_c_mux_sel_o = OP_C_FREG_C;
+        // we dont even need to choose C 'cause this operand must from register file
+        extension_o        = F;
+        alu_operator_o     = ALU_FNMADD;
+
+      end
+
+// RV32F ==================================================== //
       default: ;
     endcase
   end
 
   // do not enable multdiv in case of illegal instruction exceptions
-  assign mult_en_o = illegal_insn ? 1'b0 : mult_sel_o;
-  assign div_en_o  = illegal_insn ? 1'b0 : div_sel_o;
+  assign mult_en_o    = illegal_insn ? 1'b0 : mult_sel_o;
+  assign div_en_o     = illegal_insn ? 1'b0 : div_sel_o;
+  // RV32F ============================================== //
+  assign fdiv_en_o    = illegal_insn ? 1'b0 : fdiv_sel_o;
+  assign convert_en_o = illegal_insn ? 1'b0 : convert_sel_o;
+  // RV32F ============================================== //
 
   // make sure instructions accessing non-available registers in RV32E cause illegal
   // instruction exceptions
@@ -1148,6 +1667,8 @@ module ibex_decoder #(
 
   // do not propgate regfile write enable if non-available registers are accessed in RV32E
   assign rf_we_o = rf_we & ~illegal_reg_rv32e;
+  assign frf_we_o = frf_we;
+  // FIXME what about frf_we_o?
 
   // Not all bits are used
   assign unused_instr_alu = {instr_alu[19:15],instr_alu[11:7]};

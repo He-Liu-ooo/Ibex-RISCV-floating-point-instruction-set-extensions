@@ -116,7 +116,15 @@ module ibex_cs_registers #(
     input  logic                 mem_store_i,            // store to memory in this cycle
     input  logic                 dside_wait_i,           // core waiting for the dside
     input  logic                 mul_wait_i,             // core waiting for multiply
-    input  logic                 div_wait_i              // core waiting for divide
+    input  logic                 div_wait_i,             // core waiting for divide
+
+    // RV32F ================================ //
+    
+    // fcsr
+    input  logic [31:0]          wr_fcsr_i,
+    output logic [2:0]           dyn_rounding_mode_o
+
+    // RV32F ================================ //
 );
 
   import ibex_pkg::*;
@@ -1478,6 +1486,35 @@ module ibex_cs_registers #(
   );
 
   assign csr_shadow_err_o = mstatus_err | mtvec_err | pmp_csr_err | cpuctrl_err;
+
+// RV32F ================================== //
+
+  //////////
+  // fcsr //
+  //////////
+
+  logic [31:0]  rd_fcsr;
+
+  // TODO
+  logic fcsr_wr_en = 1'b1;
+  logic fcsr_rd_error;
+
+  assign dyn_rounding_mode_o = rd_fcsr[7:5];
+
+  ibex_csr #(
+    .Width      (32),
+    .ShadowCopy (0),
+    .ResetValue ('0)
+  ) fcsr (
+    .clk_i      (clk_i),
+    .rst_ni     (rst_ni),
+    .wr_data_i  (wr_fcsr_i),
+    .wr_en_i    (fcsr_wr_en),
+    .rd_data_o  (rd_fcsr),
+    .rd_error_o (fcsr_rd_error)
+  );
+
+// RV32F ================================== //
 
   ////////////////
   // Assertions //

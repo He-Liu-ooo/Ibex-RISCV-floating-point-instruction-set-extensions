@@ -41,6 +41,10 @@ import system_pkg::*;
   logic        hwrite_D0  ;
   logic        hready_out ;
   
+  // ME
+  // assign hsel[0] = 1'b1;
+  // assign hsel_D0[0] = 1'b1;
+  // ME
   assign ahbl_hready = hready_out;
   assign ahbl_hresp = 1'b1;
   assign htrans    = ahbl_htrans       ;

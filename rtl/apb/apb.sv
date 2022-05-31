@@ -5,11 +5,17 @@ import system_pkg::*;
   input     logic   clk,
   input     logic   rstn,
   ahblite_interconnection.ahblite_slave     ahbl_slave, 
+  
 
   //uart
   input     logic   uart_rx,
   output    logic   uart_tx,
-  //spi/i2c/gpio...
+
+  //gpio
+  input     logic [4:0]  gpio_reg_i,
+  output    logic [7:0]  gpio_reg_data_o,
+  
+  //spi/i2c...
 
 
   //irq signal
@@ -76,20 +82,21 @@ apb_bridge  x_apb_bridge (
 // ----------------------------------------------------------- 
 
 uart_top x_uart_top (
-    .pclk       (clk    ),
-    .prstn      (rstn   ),
-    .paddr      (paddr  ),
-    .penable    (penable),
-    .pwdata     (pwdata ),
-    .pwrite     (pwrite ),
-    .psel       (psel_s1),
-    .prdata     (prdata_s1),
-    .pready     (),
-    .pslverr    (),
-
     .uart_clk   (clk    ),
     .uart_rx    (uart_rx),
     .uart_tx    (uart_tx),
+
+    .pclk       (clk    ),
+    .prstn      (rstn   ),
+    .penable    (penable),
+    .pwrite     (pwrite ),
+    .psel       (psel_s1),
+    .paddr      (paddr  ),
+    .pwdata     (pwdata ),
+
+    .prdata     (prdata_s1),
+    .pready     (),
+    .pslverr    (),
 
     .uart_irq   (uart_irq)
 );
@@ -97,6 +104,21 @@ uart_top x_uart_top (
 // -----------------------------------------------------------
 // ----------- Instantiate xxxx ------------------------------
 // ----------------------------------------------------------- 
+gpio x_gpio (
+    .pclk_i            ( clk             ),
+    .prstn_i           ( rstn            ),
+    .gpio_reg_i        ( gpio_reg_i      ), 
+    .gpio_reg_data_o   ( gpio_reg_data_o ), 
+
+    .penable_i         ( penable         ),
+    .pwrite_i          ( pwrite          ),
+    .psel_i            ( psel_s4         ),
+    .paddr_i           ( paddr           ),
+    .pwdata_i          ( pwdata          ),
+
+    .pready_o          (),
+    .pslverr_o         ()
+);
 
 
 endmodule

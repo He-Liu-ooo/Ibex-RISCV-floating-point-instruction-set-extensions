@@ -1,0 +1,5 @@
+#!/bin/bash
+vcs -R -full64 +v2k -fsdb -sverilog -f file.f -l run.log
+verdi -ssf tb_uart.fsdb -2001 -sverilog -f file.f
+
+

@@ -17,8 +17,8 @@ import system_pkg::*;
   logic        SRAM_RD_EN,SRAM_WR_EN;
   logic        CEN0,CEN1,CEN2,CEN3;
   logic        WEN0,WEN1,WEN2,WEN3;
-  logic [7:0]  D0,D1,D2,D3;
-  logic [7:0]  Q0,Q1,Q2,Q3;
+  logic [31:0]  D;
+  logic [31:0]  Q;
   logic [9:0]  SRAM_RD_ADDR;
   logic [9:0]  SRAM_WR_ADDR;
   logic [9:0]  ADDR;
@@ -45,62 +45,29 @@ import system_pkg::*;
   assign SRAM_WR_ADDR = ahbl_haddr_d0[11:2];
 
   // CEN0-3
-  assign CEN0 = SRAM_RD_EN && (SRAM_WR_EN || ~(ahbl_haddr_d0[1:0]==2'b00));
-  assign CEN1 = SRAM_RD_EN && (SRAM_WR_EN || ~(((ahbl_haddr_d0[1:0]==2'b01)&&(ahbl_hsize_d0==3'b000))||((ahbl_haddr_d0[1:0]==2'b00)&&(ahbl_hsize_d0!=3'b000))));
-  assign CEN2 = SRAM_RD_EN && (SRAM_WR_EN || ~(((ahbl_haddr_d0[1:0]==2'b10)&&(ahbl_hsize_d0[2:1]==2'b00))||((ahbl_haddr_d0[1:0]==2'b00)&&(ahbl_hsize_d0==3'b010))));
-  assign CEN3 = SRAM_RD_EN && (SRAM_WR_EN || ~(((ahbl_haddr_d0[1:0]==2'b11)&&(ahbl_hsize_d0==3'b000))||((ahbl_haddr_d0[1:0]==2'b10)&&(ahbl_hsize_d0==3'b001))||((ahbl_haddr_d0[1:0]==2'b00)&&(ahbl_hsize_d0==3'b010))));
+  assign CEN = SRAM_RD_EN && SRAM_WR_EN;
 
   // WEN0-3
-  assign WEN0 = CEN0 || ~ahbl_hwrite_d0;
-  assign WEN1 = CEN1 || ~ahbl_hwrite_d0;
-  assign WEN2 = CEN2 || ~ahbl_hwrite_d0;
-  assign WEN3 = CEN3 || ~ahbl_hwrite_d0;
+  assign WEN = CEN || ~ahbl_hwrite_d0;
   
   // ADDR
   assign ADDR = SRAM_WR_EN ? SRAM_RD_ADDR : SRAM_WR_ADDR;
   // DATA
-  assign D0 = slave0.hwdata[7:0];
-  assign D1 = slave0.hwdata[15:8];
-  assign D2 = slave0.hwdata[23:16];
-  assign D3 = slave0.hwdata[31:24];
+  assign D = slave0.hwdata;
+
   // instance of data sram
-sram_8x1024 i_sram_block0
+sram_32x1024 i_sram_block
 (
   .CLK ( clk  ),
-  .CEN ( CEN0 ),
-  .WEN ( WEN0 ),
+  .RSTN( rstn ),
+  .CEN ( CEN  ),
+  .WEN ( WEN  ),
   .A   ( ADDR ),
-  .D   ( D0   ),
-  .Q   ( Q0   )
-);
-sram_8x1024 i_sram_block1
-(
-  .CLK ( clk  ),
-  .CEN ( CEN1 ),
-  .WEN ( WEN1 ),
-  .A   ( ADDR ),
-  .D   ( D1   ),
-  .Q   ( Q1   )
-);
-sram_8x1024 i_sram_block2
-(
-  .CLK ( clk  ),
-  .CEN ( CEN2 ),
-  .WEN ( WEN2 ),
-  .A   ( ADDR ),
-  .D   ( D2   ),
-  .Q   ( Q2   )
-);  
-sram_8x1024 i_sram_block3
-(
-  .CLK ( clk  ),
-  .CEN ( CEN3 ),
-  .WEN ( WEN3 ),
-  .A   ( ADDR ),
-  .D   ( D3   ),
-  .Q   ( Q3   )
+  .D   ( D    ),
+  .Q   ( Q    )
 );
 
-  assign slave0.hrdata = {Q3,Q2,Q1,Q0};
+  assign slave0.hrdata = Q;
 
 endmodule:data_sram
+

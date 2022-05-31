@@ -61,6 +61,10 @@ module ibex_id_stage #(
     input  logic                      instr_fetch_err_i,
     input  logic                      instr_fetch_err_plus2_i,
 
+    // RV32F ===================================================== //
+    input  logic [2:0]                dyn_rounding_mode_i,
+    // RV32F ===================================================== //
+
     input  logic [31:0]               pc_id_i,
 
     // Stalls
@@ -70,6 +74,10 @@ module ibex_id_stage #(
     output ibex_pkg::alu_op_e         alu_operator_ex_o,
     output logic [31:0]               alu_operand_a_ex_o,
     output logic [31:0]               alu_operand_b_ex_o,
+    // RV32F ===================================================== //
+    output logic [31:0]               alu_operand_c_ex_o,
+    output ibex_pkg::rounding_mode_e  falu_rounding_mode_ex_o,
+    // RV32F ===================================================== //
 
     // Multicycle Operation Stage Register
     input  logic [1:0]                imd_val_we_ex_i,
@@ -83,6 +91,10 @@ module ibex_id_stage #(
     // MUL, DIV
     output logic                      mult_en_ex_o,
     output logic                      div_en_ex_o,
+    // RV32F ========================================== //
+    output logic                      fdiv_en_ex_o,
+    output logic                      convert_en_ex_o,
+    // RV32F ========================================== //
     output logic                      mult_sel_ex_o,
     output logic                      div_sel_ex_o,
     output ibex_pkg::md_op_e          multdiv_operator_ex_o,
@@ -110,6 +122,9 @@ module ibex_id_stage #(
     // Interface to load store unit
     output logic                      lsu_req_o,
     output logic                      lsu_we_o,
+    // RV32F ================================================= //
+    output ibex_pkg::rv_extension_e   lsu_extension_o,    // ME: tell lsu what kind of instruction this is, I or F
+    // RV32F ================================================= //
     output logic [1:0]                lsu_type_o,
     output logic                      lsu_sign_ext_o,
     output logic [31:0]               lsu_wdata_o,
@@ -149,21 +164,41 @@ module ibex_id_stage #(
     // Register file read
     output logic [4:0]                rf_raddr_a_o,
     input  logic [31:0]               rf_rdata_a_i,
+    // RV32F ============================================ //
+    input  logic [31:0]               frf_rdata_a_i,   
+    // RV32F ============================================ // 
+
     output logic [4:0]                rf_raddr_b_o,
     input  logic [31:0]               rf_rdata_b_i,
+    // RV32F ============================================ //
+    input  logic [31:0]               frf_rdata_b_i,
+    
+    output logic [4:0]                rf_raddr_c_o,
+    input  logic [31:0]               rf_rdata_c_i,
+    input  logic [31:0]               frf_rdata_c_i,
+    // RV32F ============================================ // 
+
     output logic                      rf_ren_a_o,
     output logic                      rf_ren_b_o,
+    // RV32F ============================================ //
+    //output logic                      rf_ren_c_o,
+    // RV32F ============================================ //
 
     // Register file write (via writeback)
     output logic [4:0]                rf_waddr_id_o,
     output logic [31:0]               rf_wdata_id_o,
     output logic                      rf_we_id_o,
+    // RV32F =============================================== //
+    output logic                      frf_we_id_o,
+    output logic                      rf_rd_c_wb_match_o,
+    // RV32F =============================================== //
     output logic                      rf_rd_a_wb_match_o,
     output logic                      rf_rd_b_wb_match_o,
 
     // Register write information from writeback (for resolving data hazards)
     input  logic [4:0]                rf_waddr_wb_i,
-    input  logic [31:0]               rf_wdata_fwd_wb_i,
+    input  logic [31:0]               rf_wdata_fwd_wb_i,    // this can be an integer or a fp
+                                                            // TODO we should make sure this
     input  logic                      rf_write_wb_i,
 
     output  logic                     en_wb_o,
@@ -236,18 +271,31 @@ module ibex_id_stage #(
 
   rf_wd_sel_e  rf_wdata_sel;
   logic        rf_we_dec, rf_we_raw;
-  logic        rf_ren_a, rf_ren_b;
+  logic        frf_we_dec, frf_we_raw;          // RV32F ============= //
+  logic        rf_ren_a, rf_ren_b, rf_ren_c;    // RV32F ============= //
 
   assign rf_ren_a_o = rf_ren_a;
   assign rf_ren_b_o = rf_ren_b;
+  // RV32F ============================== //
+  //assign rf_ren_c_o = rf_ren_c;
+  // RV32F ============================== //
 
   logic [31:0] rf_rdata_a_fwd;
   logic [31:0] rf_rdata_b_fwd;
+  logic [31:0] rf_rdata_c_fwd;
+  // RV32F ========================== //
+  logic [31:0] frf_rdata_a_fwd;
+  logic [31:0] frf_rdata_b_fwd;
+  logic [31:0] frf_rdata_c_fwd;
+  // RV32F ========================== // 
 
   // ALU Control
   alu_op_e     alu_operator;
   op_a_sel_e   alu_op_a_mux_sel, alu_op_a_mux_sel_dec;
   op_b_sel_e   alu_op_b_mux_sel, alu_op_b_mux_sel_dec;
+  // EXTENSION
+  op_c_sel_e   alu_op_c_mux_sel, alu_op_c_mux_sel_dec;
+  // EXTENTION
   logic        alu_multicycle_dec;
   logic        stall_alu;
 
@@ -262,6 +310,10 @@ module ibex_id_stage #(
   // Multiplier Control
   logic        mult_en_id, mult_en_dec; // use integer multiplier
   logic        div_en_id, div_en_dec;   // use integer division or reminder
+  // RV32F ================== //
+  logic        fdiv_en_id, fdiv_en_dec;             //  use float division
+  logic        convert_en_id, convert_en_dec;
+  // RV32F ================== //
   logic        multdiv_en_dec;
   md_op_e      multdiv_operator;
   logic [1:0]  multdiv_signed_mode;
@@ -279,6 +331,12 @@ module ibex_id_stage #(
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
 
+  // RV32F ========================================= //
+  logic [31:0] alu_operand_c;
+  rv_extension_e    extension_mux_sel;
+  rounding_mode_e   falu_rounding_mode;
+  // RV32F ========================================= // 
+
   /////////////
   // LSU Mux //
   /////////////
@@ -286,6 +344,7 @@ module ibex_id_stage #(
   // Misaligned loads/stores result in two aligned loads/stores, compute second address
   assign alu_op_a_mux_sel = lsu_addr_incr_req_i ? OP_A_FWD        : alu_op_a_mux_sel_dec;
   assign alu_op_b_mux_sel = lsu_addr_incr_req_i ? OP_B_IMM        : alu_op_b_mux_sel_dec;
+  assign alu_op_c_mux_sel = alu_op_c_mux_sel_dec;
   assign imm_b_mux_sel    = lsu_addr_incr_req_i ? IMM_B_INCR_ADDR : imm_b_mux_sel_dec;
 
   ///////////////////
@@ -299,6 +358,9 @@ module ibex_id_stage #(
   always_comb begin : alu_operand_a_mux
     unique case (alu_op_a_mux_sel)
       OP_A_REG_A:  alu_operand_a = rf_rdata_a_fwd;
+      // RV32F ========================================= //
+      OP_A_FREG_A: alu_operand_a = frf_rdata_a_fwd;
+      // RV32F ========================================= //
       OP_A_FWD:    alu_operand_a = lsu_addr_last_i;
       OP_A_CURRPC: alu_operand_a = pc_id_i;
       OP_A_IMM:    alu_operand_a = imm_a;
@@ -377,7 +439,27 @@ module ibex_id_stage #(
   end
 
   // ALU MUX for Operand B
-  assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : rf_rdata_b_fwd;
+  // assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : rf_rdata_b_fwd;
+  always_comb begin : alu_operand_b_mux
+    unique case (alu_op_b_mux_sel)
+      OP_B_REG_B:  alu_operand_b = rf_rdata_b_fwd;
+      // RV32F ========================================= //
+      OP_B_FREG_B: alu_operand_b = frf_rdata_b_fwd;
+      // RV32F ========================================= //
+      OP_B_IMM:    alu_operand_b = imm_b;
+      default: ;
+    endcase
+  end
+  
+  // RV32F ====================== //
+  always_comb begin : alu_operand_c_mux
+    unique case (alu_op_c_mux_sel) 
+      OP_C_REG_C: alu_operand_c = rf_rdata_c_fwd;
+      OP_C_FREG_C: alu_operand_c = frf_rdata_c_fwd;
+      default: ;
+    endcase
+  end
+  // RV32F ====================== //
 
   /////////////////////////////////////////
   // Multicycle Operation Stage Register //
@@ -401,6 +483,9 @@ module ibex_id_stage #(
 
   // Suppress register write if there is an illegal CSR access or instruction is not executing
   assign rf_we_id_o = rf_we_raw & instr_executing & ~illegal_csr_insn_i;
+  // RV32F ========================================================================================== //
+  assign frf_we_id_o = frf_we_raw & instr_executing & ~illegal_csr_insn_i;
+  // RV32F ========================================================================================== //
 
   // Register file write data mux
   always_comb begin : rf_wdata_id_mux
@@ -441,6 +526,10 @@ module ibex_id_stage #(
       .instr_rdata_alu_i               ( instr_rdata_alu_i    ),
       .illegal_c_insn_i                ( illegal_c_insn_i     ),
 
+      // RV32F ===================================================== //
+      .dyn_rounding_mode_i             ( dyn_rounding_mode_i  ),
+      // RV32F ===================================================== //
+
       // immediates
       .imm_a_mux_sel_o                 ( imm_a_mux_sel        ),
       .imm_b_mux_sel_o                 ( imm_b_mux_sel_dec    ),
@@ -457,22 +546,37 @@ module ibex_id_stage #(
       // register file
       .rf_wdata_sel_o                  ( rf_wdata_sel         ),
       .rf_we_o                         ( rf_we_dec            ),
+      // RV32F ==================================================== //
+      .frf_we_o                        ( frf_we_dec           ),
+      // RV32F ==================================================== //
 
       .rf_raddr_a_o                    ( rf_raddr_a_o         ),
       .rf_raddr_b_o                    ( rf_raddr_b_o         ),
       .rf_waddr_o                      ( rf_waddr_id_o        ),
       .rf_ren_a_o                      ( rf_ren_a             ),
       .rf_ren_b_o                      ( rf_ren_b             ),
+      // RV32F ======================================================= //
+      .rf_raddr_c_o                    ( rf_raddr_c_o         ),
+      //.rf_ren_c_o                      ( rf_ren_c             ),
+      // RV32F ======================================================= //
 
       // ALU
       .alu_operator_o                  ( alu_operator         ),
       .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel_dec ),
       .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel_dec ),
+      // EXTENSION
+      .alu_op_c_mux_sel_o              ( alu_op_c_mux_sel_dec ),
+      // EXTENSION
       .alu_multicycle_o                ( alu_multicycle_dec   ),
 
       // MULT & DIV
       .mult_en_o                       ( mult_en_dec          ),
       .div_en_o                        ( div_en_dec           ),
+      // RV32F =================================================== //
+      .fdiv_en_o                       ( fdiv_en_dec          ),
+      //.fdiv_sel_o                      ( fdiv_sel_ex_o        ),   // TODO  mul and div output id_stage
+      .convert_en_o                    ( convert_en_dec       ),
+      // RV32F =================================================== //
       .mult_sel_o                      ( mult_sel_ex_o        ),
       .div_sel_o                       ( div_sel_ex_o         ),
       .multdiv_operator_o              ( multdiv_operator     ),
@@ -490,7 +594,13 @@ module ibex_id_stage #(
 
       // jump/branches
       .jump_in_dec_o                   ( jump_in_dec          ),
-      .branch_in_dec_o                 ( branch_in_dec        )
+      .branch_in_dec_o                 ( branch_in_dec        ),
+
+      // RV32F ================================================== //
+      // inform the following stage about what extension the instruction is
+      .extension_o                     ( extension_mux_sel    ),
+      .falu_rounding_mode_o            ( falu_rounding_mode   )    // FALU operation rounding mode 
+      // RV32F ================================================== //
   );
 
   /////////////////////////////////
@@ -544,14 +654,14 @@ module ibex_id_stage #(
       .csr_pipe_flush_i               ( csr_pipe_flush          ),
 
       // from IF-ID pipeline
-      .instr_valid_i                  ( instr_valid_i           ),
-      .instr_i                        ( instr_rdata_i           ),
-      .instr_compressed_i             ( instr_rdata_c_i         ),
-      .instr_is_compressed_i          ( instr_is_compressed_i   ),
+      .instr_valid_i                  ( instr_valid_i           ),   // ME: 指令是否有效
+      .instr_i                        ( instr_rdata_i           ),   // ME: 指令本身
+      .instr_compressed_i             ( instr_rdata_c_i         ),   // ME: 被压缩的指令
+      .instr_is_compressed_i          ( instr_is_compressed_i   ),   // ME: 指令是否仍是被压缩的
       .instr_bp_taken_i               ( instr_bp_taken_i        ),
       .instr_fetch_err_i              ( instr_fetch_err_i       ),
-      .instr_fetch_err_plus2_i        ( instr_fetch_err_plus2_i ),
-      .pc_id_i                        ( pc_id_i                 ),
+      .instr_fetch_err_plus2_i        ( instr_fetch_err_plus2_i ),   // 
+      .pc_id_i                        ( pc_id_i                 ),   // ME: 指令的 pc 地址
 
       // to IF-ID pipeline
       .instr_valid_clear_o            ( instr_valid_clear_o     ),
@@ -617,17 +727,27 @@ module ibex_id_stage #(
       .perf_tbranch_o                 ( perf_tbranch_o          )
   );
 
-  assign multdiv_en_dec   = mult_en_dec | div_en_dec;
+  assign multdiv_en_dec   = mult_en_dec | div_en_dec | fdiv_en_dec | convert_en_dec;  // RV32F
 
   assign lsu_req         = instr_executing ? data_req_allowed & lsu_req_dec  : 1'b0;
   assign mult_en_id      = instr_executing ? mult_en_dec                     : 1'b0;
   assign div_en_id       = instr_executing ? div_en_dec                      : 1'b0;
+  // RV32F ============================================================================= //
+  assign fdiv_en_id      = instr_executing ? fdiv_en_dec                     : 1'b0;
+  assign convert_en_id   = instr_executing ? convert_en_dec                  : 1'b0;
+  // RV32F ============================================================================= //
 
   assign lsu_req_o               = lsu_req;
   assign lsu_we_o                = lsu_we;
   assign lsu_type_o              = lsu_type;
   assign lsu_sign_ext_o          = lsu_sign_ext;
-  assign lsu_wdata_o             = rf_rdata_b_fwd;
+  // RV32F ============================================= //
+  // TODO 把这个改成两路以上的多路选择器， in case of other extensions
+  assign lsu_wdata_o             = (extension_mux_sel == F)? frf_rdata_b_fwd : rf_rdata_b_fwd;
+
+  assign lsu_extension_o         = extension_mux_sel;
+  // RV32F ============================================= //
+
   // csr_op_en_o is set when CSR access should actually happen.
   // csv_access_o is set when CSR access instruction is present and is used to compute whether a CSR
   // access is illegal. A combinational loop would be created if csr_op_en_o was used along (as
@@ -637,9 +757,17 @@ module ibex_id_stage #(
   assign alu_operator_ex_o           = alu_operator;
   assign alu_operand_a_ex_o          = alu_operand_a;
   assign alu_operand_b_ex_o          = alu_operand_b;
+  // RV32F ====================================================== //
+  assign alu_operand_c_ex_o          = alu_operand_c;
+  assign falu_rounding_mode_ex_o     = falu_rounding_mode;
+  // RV32F ====================================================== //
 
   assign mult_en_ex_o                = mult_en_id;
   assign div_en_ex_o                 = div_en_id;
+  // RV32F =========================================== //
+  assign fdiv_en_ex_o                = fdiv_en_id;
+  assign convert_en_ex_o             = convert_en_id;
+  // RV32F =========================================== //
 
   assign multdiv_operator_ex_o       = multdiv_operator;
   assign multdiv_signed_mode_ex_o    = multdiv_signed_mode;
@@ -750,6 +878,7 @@ module ibex_id_stage #(
   always_comb begin
     id_fsm_d                = id_fsm_q;
     rf_we_raw               = rf_we_dec;
+    frf_we_raw              = frf_we_dec;   // RV32F
     stall_multdiv           = 1'b0;
     stall_jump              = 1'b0;
     stall_branch            = 1'b0;
@@ -776,11 +905,12 @@ module ibex_id_stage #(
             end
             multdiv_en_dec: begin
               // MUL or DIV operation
-              if (~ex_valid_i) begin
+              if (~ex_valid_i) begin   // ME: if ex res is not valid, enters MULTI-CYCLE stage
                 // When single-cycle multiply is configured mul can finish in the first cycle so
                 // only enter MULTI_CYCLE state if a result isn't immediately available
                 id_fsm_d      = MULTI_CYCLE;
                 rf_we_raw     = 1'b0;
+                frf_we_raw    = 1'b0;
                 stall_multdiv = 1'b1;
               end
             end
@@ -812,6 +942,7 @@ module ibex_id_stage #(
               stall_alu     = 1'b1;
               id_fsm_d      = MULTI_CYCLE;
               rf_we_raw     = 1'b0;
+              frf_we_raw    = 1'b0;
             end
             default: begin
               id_fsm_d      = FIRST_CYCLE;
@@ -822,6 +953,7 @@ module ibex_id_stage #(
         MULTI_CYCLE: begin
           if(multdiv_en_dec) begin
             rf_we_raw       = rf_we_dec & ex_valid_i;
+            frf_we_raw      = frf_we_dec & ex_valid_i;
           end
 
           if (multicycle_done & ready_wb_i) begin
@@ -847,7 +979,7 @@ module ibex_id_stage #(
 
   // Stall ID/EX stage for reason that relates to instruction in ID/EX
   assign stall_id = stall_ld_hz | stall_mem | stall_multdiv | stall_jump | stall_branch |
-                      stall_alu;
+                      stall_alu;   // ME: any of the signal is not ready, we stall
 
   assign instr_done = ~stall_id & ~flush_id & instr_executing;
 
@@ -862,6 +994,9 @@ module ibex_id_stage #(
     // Register read address matches write address in WB
     logic rf_rd_a_wb_match;
     logic rf_rd_b_wb_match;
+    // RV32F ==================== //
+    logic rf_rd_c_wb_match;
+    // RV32F ==================== //
     // Hazard between registers being read and written
     logic rf_rd_a_hz;
     logic rf_rd_b_hz;
@@ -937,12 +1072,20 @@ module ibex_id_stage #(
     // (otherwide we might issue two requests for the same instruction)
     `ASSERT(IbexStallMemNoRequest,
       instr_valid_i & lsu_req_dec & ~instr_done |-> ~lsu_req_done_i)
+    
+    // FIXME maybe we need arrange register c with these signals
 
     assign rf_rd_a_wb_match = (rf_waddr_wb_i == rf_raddr_a_o) & |rf_raddr_a_o;
     assign rf_rd_b_wb_match = (rf_waddr_wb_i == rf_raddr_b_o) & |rf_raddr_b_o;
+    // RV32F ====================================================================== //
+    assign rf_rd_c_wb_match = (rf_waddr_wb_i == rf_raddr_c_o) & |rf_raddr_c_o;
+    // RV32F ====================================================================== //
 
     assign rf_rd_a_wb_match_o = rf_rd_a_wb_match;
     assign rf_rd_b_wb_match_o = rf_rd_b_wb_match;
+    // RV32F ===================================== //
+    assign rf_rd_c_wb_match_o = rf_rd_c_wb_match;
+    // RV32F ===================================== //
 
     // If instruction is reading register that load will be writing stall in
     // ID until load is complete. No need to stall when reading zero register.
@@ -954,6 +1097,12 @@ module ibex_id_stage #(
     // resolved via a stall (see above).
     assign rf_rdata_a_fwd = rf_rd_a_wb_match & rf_write_wb_i ? rf_wdata_fwd_wb_i : rf_rdata_a_i;
     assign rf_rdata_b_fwd = rf_rd_b_wb_match & rf_write_wb_i ? rf_wdata_fwd_wb_i : rf_rdata_b_i;
+    assign rf_rdata_c_fwd = rf_rd_c_wb_match & rf_write_wb_i ? rf_wdata_fwd_wb_i : rf_rdata_c_i;
+    // RV32F ======================================================================================= //
+    assign frf_rdata_a_fwd = rf_rd_a_wb_match & rf_write_wb_i ? rf_wdata_fwd_wb_i : frf_rdata_a_i;
+    assign frf_rdata_b_fwd = rf_rd_b_wb_match & rf_write_wb_i ? rf_wdata_fwd_wb_i : frf_rdata_b_i;
+    assign frf_rdata_c_fwd = rf_rd_c_wb_match & rf_write_wb_i ? rf_wdata_fwd_wb_i : frf_rdata_c_i;
+    // RV32F ======================================================================================= //
 
     assign stall_ld_hz = outstanding_load_wb_i & (rf_rd_a_hz | rf_rd_b_hz);
 
@@ -992,6 +1141,13 @@ module ibex_id_stage #(
     // register file
     assign rf_rdata_a_fwd = rf_rdata_a_i;
     assign rf_rdata_b_fwd = rf_rdata_b_i;
+    assign rf_rdata_c_fwd = rf_rdata_c_i;
+    // RV32F ================================ //
+    assign frf_rdata_a_fwd = frf_rdata_a_i;
+    assign frf_rdata_b_fwd = frf_rdata_b_i;
+    assign frf_rdata_c_fwd = frf_rdata_c_i;
+    // RV32F ================================ //
+
 
     assign rf_rd_a_wb_match_o = 1'b0;
     assign rf_rd_b_wb_match_o = 1'b0;
@@ -1051,17 +1207,18 @@ module ibex_id_stage #(
   ////////////////
 
   // Selectors must be known/valid.
-  `ASSERT_KNOWN_IF(IbexAluOpMuxSelKnown, alu_op_a_mux_sel, instr_valid_i)
+  //`ASSERT_KNOWN_IF(IbexAluOpMuxSelKnown, alu_op_a_mux_sel, instr_valid_i)
   `ASSERT(IbexAluAOpMuxSelValid, instr_valid_i |-> alu_op_a_mux_sel inside {
       OP_A_REG_A,
+      OP_A_FREG_A,     // RV32F
       OP_A_FWD,
       OP_A_CURRPC,
       OP_A_IMM})
-  `ASSERT_KNOWN_IF(IbexBTAluAOpMuxSelKnown, bt_a_mux_sel, instr_valid_i)
+  //`ASSERT_KNOWN_IF(IbexBTAluAOpMuxSelKnown, bt_a_mux_sel, instr_valid_i)
   `ASSERT(IbexBTAluAOpMuxSelValid, instr_valid_i |-> bt_a_mux_sel inside {
       OP_A_REG_A,
       OP_A_CURRPC})
-  `ASSERT_KNOWN_IF(IbexBTAluBOpMuxSelKnown, bt_b_mux_sel, instr_valid_i)
+  //`ASSERT_KNOWN_IF(IbexBTAluBOpMuxSelKnown, bt_b_mux_sel, instr_valid_i)
   `ASSERT(IbexBTAluBOpMuxSelValid, instr_valid_i |-> bt_b_mux_sel inside {
       IMM_B_I,
       IMM_B_B,
@@ -1070,19 +1227,19 @@ module ibex_id_stage #(
   `ASSERT(IbexRegfileWdataSelValid, instr_valid_i |-> rf_wdata_sel inside {
       RF_WD_EX,
       RF_WD_CSR})
-  `ASSERT_KNOWN(IbexWbStateKnown, id_fsm_q)
+  //`ASSERT_KNOWN(IbexWbStateKnown, id_fsm_q)
 
   // Branch decision must be valid when jumping.
-  `ASSERT_KNOWN_IF(IbexBranchDecisionValid, branch_decision_i,
-      instr_valid_i && !(illegal_csr_insn_i || instr_fetch_err_i))
+  //`ASSERT_KNOWN_IF(IbexBranchDecisionValid, branch_decision_i,
+  //    instr_valid_i && !(illegal_csr_insn_i || instr_fetch_err_i))
 
   // Instruction delivered to ID stage can not contain X.
-  `ASSERT_KNOWN_IF(IbexIdInstrKnown, instr_rdata_i,
-      instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i))
+  //`ASSERT_KNOWN_IF(IbexIdInstrKnown, instr_rdata_i,
+  //    instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i))
 
   // Instruction delivered to ID stage can not contain X.
-  `ASSERT_KNOWN_IF(IbexIdInstrALUKnown, instr_rdata_alu_i,
-      instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i))
+  //`ASSERT_KNOWN_IF(IbexIdInstrALUKnown, instr_rdata_alu_i,
+  //    instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i))
 
   // Multicycle enable signals must be unique.
   `ASSERT(IbexMulticycleEnableUnique,

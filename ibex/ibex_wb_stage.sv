@@ -33,19 +33,30 @@ module ibex_wb_stage #(
   output logic [31:0]              pc_wb_o,
   output logic                     perf_instr_ret_wb_o,
   output logic                     perf_instr_ret_compressed_wb_o,
+  
 
   input  logic [4:0]               rf_waddr_id_i,
   input  logic [31:0]              rf_wdata_id_i,
   input  logic                     rf_we_id_i,
+  // RV32F ===================================================== //
+  input  logic                     frf_we_id_i,
+  // RV32F ===================================================== //
 
   input  logic [31:0]              rf_wdata_lsu_i,
   input  logic                     rf_we_lsu_i,
+  // RV32F ===================================================== //
+  input  logic                     frf_we_lsu_i,
+  // RV32F ===================================================== //
 
   output logic [31:0]              rf_wdata_fwd_wb_o,
 
   output logic [4:0]               rf_waddr_wb_o,
   output logic [31:0]              rf_wdata_wb_o,
+  output logic [31:0]              frf_wdata_wb_o,
   output logic                     rf_we_wb_o,
+  // RV32F ===================================================== //
+  output logic                     frf_we_wb_o,
+  // RV32F ===================================================== //
 
   input logic                      lsu_resp_valid_i,
   input logic                      lsu_resp_err_i,
@@ -59,6 +70,9 @@ module ibex_wb_stage #(
   // 1 == RF write from LSU
   logic [31:0] rf_wdata_wb_mux    [2];
   logic [1:0]  rf_wdata_wb_mux_we;
+  // RV32F ================================== //
+  logic [1:0]  frf_wdata_wb_mux_we;            // ME judge if write float point register
+  // RV32F ================================== //
 
   if(WritebackStage) begin : g_writeback_stage
     logic [31:0]    rf_wdata_wb_q;
@@ -105,8 +119,9 @@ module ibex_wb_stage #(
     end
 
     assign rf_waddr_wb_o         = rf_waddr_wb_q;
-    assign rf_wdata_wb_mux[0]    = rf_wdata_wb_q;
+    assign rf_wdata_wb_mux[0]    = rf_wdata_wb_q;   // ME RF from ID
     assign rf_wdata_wb_mux_we[0] = rf_we_wb_q & wb_valid_q;
+    // TODO figure out what rf_wdata_wb_mux_we[0] is like when WB_stage is implemented
 
     assign ready_wb_o = ~wb_valid_q | wb_done;
 
@@ -132,9 +147,12 @@ module ibex_wb_stage #(
     assign rf_wdata_fwd_wb_o = rf_wdata_wb_q;
   end else begin : g_bypass_wb
     // without writeback stage just pass through register write signals
-    assign rf_waddr_wb_o         = rf_waddr_id_i;
-    assign rf_wdata_wb_mux[0]    = rf_wdata_id_i;
-    assign rf_wdata_wb_mux_we[0] = rf_we_id_i;
+    assign rf_waddr_wb_o          = rf_waddr_id_i;
+    assign rf_wdata_wb_mux[0]     = rf_wdata_id_i;
+    assign rf_wdata_wb_mux_we[0]  = rf_we_id_i;
+    // RV32F ========================================== //
+    assign frf_wdata_wb_mux_we[0] = frf_we_id_i; 
+    // RV32F ========================================== //
 
     // Increment instruction retire counters for valid instructions which are not lsu errors
     assign perf_instr_ret_wb_o            = instr_perf_count_id_i & en_wb_i &
@@ -165,13 +183,20 @@ module ibex_wb_stage #(
     assign instr_done_wb_o        = 1'b0;
   end
 
-  assign rf_wdata_wb_mux[1]    = rf_wdata_lsu_i;
-  assign rf_wdata_wb_mux_we[1] = rf_we_lsu_i;
+  assign rf_wdata_wb_mux[1]      = rf_wdata_lsu_i;
+  assign rf_wdata_wb_mux_we[1]   = rf_we_lsu_i;
+  // RV32F ======================================= //
+  assign frf_wdata_wb_mux_we[1]  = frf_we_lsu_i;
+  // RV32F ======================================= //
 
   // RF write data can come from ID results (all RF writes that aren't because of loads will come
   // from here) or the LSU (RF writes for load data)
-  assign rf_wdata_wb_o = rf_wdata_wb_mux_we[0] ? rf_wdata_wb_mux[0] : rf_wdata_wb_mux[1];
-  assign rf_we_wb_o    = |rf_wdata_wb_mux_we;
+  assign rf_wdata_wb_o  = rf_wdata_wb_mux_we[0] ? rf_wdata_wb_mux[0] : rf_wdata_wb_mux[1];
+  assign rf_we_wb_o     = |rf_wdata_wb_mux_we;
+  // RV32F ======================================== //
+  assign frf_wdata_wb_o = frf_wdata_wb_mux_we[0] ? rf_wdata_wb_mux[0] : rf_wdata_wb_mux[1];
+  assign frf_we_wb_o    = |frf_wdata_wb_mux_we;
+  // RV32F ======================================== //
 
   `DV_FCOV_SIGNAL_GEN_IF(logic, wb_valid, g_writeback_stage.wb_valid_q, WritebackStage)
 

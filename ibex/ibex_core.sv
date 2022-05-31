@@ -137,6 +137,9 @@ module ibex_core #(
   logic        instr_fetch_err;                // Bus error on instr fetch
   logic        instr_fetch_err_plus2;          // Instruction error is misaligned
   logic        illegal_c_insn_id;              // Illegal compressed instruction sent to ID stage
+  // RV32F ================================= //
+  logic [2:0]  dyn_rounding_mode_id;           // from csr
+  // RV32F ================================= //
   logic [31:0] pc_if;                          // Program counter in IF stage
   logic [31:0] pc_id;                          // Program counter in ID stage
   logic [31:0] pc_wb;                          // Program counter in WB stage
@@ -185,20 +188,39 @@ module ibex_core #(
   logic [31:0] rf_rdata_a;
   logic [4:0]  rf_raddr_b;
   logic [31:0] rf_rdata_b;
+  logic [4:0]  rf_raddr_c;     // RV32F
+  logic [31:0] rf_rdata_c;
+  // RV32F ============================== //
+  logic [31:0] frf_rdata_a;
+  logic [31:0] frf_rdata_b;
+  logic [31:0] frf_rdata_c;
+  // RV32F ============================== //
   logic        rf_ren_a;
   logic        rf_ren_b;
+  //logic        rf_ren_c;      // RV32F
   logic [4:0]  rf_waddr_wb;
   logic [31:0] rf_wdata_wb;
+  // RV32F ============================== //
+  logic [31:0] frf_wdata_wb;
+  // RV32F ============================== //
   // Writeback register write data that can be used on the forwarding path (doesn't factor in memory
   // read data as this is too late for the forwarding path)
   logic [31:0] rf_wdata_fwd_wb;
   logic [31:0] rf_wdata_lsu;
   logic        rf_we_wb;
   logic        rf_we_lsu;
+  // RV32F =============================== //
+  logic        frf_we_wb;
+  logic        frf_we_lsu;
+  // RV32F =============================== //
 
   logic [4:0]  rf_waddr_id;
   logic [31:0] rf_wdata_id;
   logic        rf_we_id;
+  // RV32F =========================== //
+  logic        frf_we_id;
+  logic        rf_rd_c_wb_match;
+  // RV32F =========================== //
   logic        rf_rd_a_wb_match;
   logic        rf_rd_b_wb_match;
 
@@ -206,6 +228,10 @@ module ibex_core #(
   alu_op_e     alu_operator_ex;
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
+  logic [31:0] alu_operand_c_ex;   // RV32F
+  // RV32F =================================== //
+  rounding_mode_e   falu_rounding_mode;
+  // RV32F =================================== //
 
   logic [31:0] bt_a_operand;
   logic [31:0] bt_b_operand;
@@ -216,6 +242,10 @@ module ibex_core #(
   // Multiplier Control
   logic        mult_en_ex;
   logic        div_en_ex;
+  // RV32F ==================== //
+  logic        fdiv_en_ex;
+  logic        convert_en_ex;
+  // RV32F ==================== //
   logic        mult_sel_ex;
   logic        div_sel_ex;
   md_op_e      multdiv_operator_ex;
@@ -237,6 +267,9 @@ module ibex_core #(
 
   // Data Memory Control
   logic        lsu_we;
+  // RV32F ========================= //
+  rv_extension_e   lsu_extension;      // tell lsu what kind of load/store this is
+  // RV32F ========================= //
   logic [1:0]  lsu_type;
   logic        lsu_sign_ext;
   logic        lsu_req;
@@ -525,6 +558,10 @@ module ibex_core #(
       .instr_fetch_err_plus2_i      ( instr_fetch_err_plus2    ),
       .illegal_c_insn_i             ( illegal_c_insn_id        ),
 
+      // RV32F ===================================================== //
+      .dyn_rounding_mode_i          ( dyn_rounding_mode_id     ),
+      // RV32F ===================================================== //
+
       .pc_id_i                      ( pc_id                    ),
 
       // Stalls
@@ -534,6 +571,10 @@ module ibex_core #(
       .alu_operator_ex_o            ( alu_operator_ex          ),
       .alu_operand_a_ex_o           ( alu_operand_a_ex         ),
       .alu_operand_b_ex_o           ( alu_operand_b_ex         ),
+      // RV32F ======================================================== //
+      .alu_operand_c_ex_o           ( alu_operand_c_ex         ),
+      .falu_rounding_mode_ex_o	    ( falu_rounding_mode       ),
+      // RV32F ======================================================== //
 
       .imd_val_q_ex_o               ( imd_val_q_ex             ),
       .imd_val_d_ex_i               ( imd_val_d_ex             ),
@@ -544,6 +585,10 @@ module ibex_core #(
 
       .mult_en_ex_o                 ( mult_en_ex               ),
       .div_en_ex_o                  ( div_en_ex                ),
+      // RV32F ===================================================== //
+      .fdiv_en_ex_o                 ( fdiv_en_ex               ),
+      .convert_en_ex_o              ( convert_en_ex            ),
+      // RV32F ===================================================== //
       .mult_sel_ex_o                ( mult_sel_ex              ),
       .div_sel_ex_o                 ( div_sel_ex               ),
       .multdiv_operator_ex_o        ( multdiv_operator_ex      ),
@@ -571,9 +616,12 @@ module ibex_core #(
       // LSU
       .lsu_req_o                    ( lsu_req                  ), // to load store unit
       .lsu_we_o                     ( lsu_we                   ), // to load store unit
+      // RV32F ======================================================== //
+      .lsu_extension_o              ( lsu_extension            ),    // ME: tell lsu what kind of instruction this is, I or F
+      // RV32F ======================================================== //
       .lsu_type_o                   ( lsu_type                 ), // to load store unit
       .lsu_sign_ext_o               ( lsu_sign_ext             ), // to load store unit
-      .lsu_wdata_o                  ( lsu_wdata                ), // to load store unit
+      .lsu_wdata_o                  ( lsu_wdata                ), // to load store unit   ME: data to write into mem
       .lsu_req_done_i               ( lsu_req_done             ), // from load store unit
 
       .lsu_addr_incr_req_i          ( lsu_addr_incr_req        ),
@@ -600,18 +648,30 @@ module ibex_core #(
       .trigger_match_i              ( trigger_match            ),
 
       // write data to commit in the register file
-      .result_ex_i                  ( result_ex                ),
+      .result_ex_i                  ( result_ex                ),    // NOTE data should be written into regfile
       .csr_rdata_i                  ( csr_rdata                ),
 
       .rf_raddr_a_o                 ( rf_raddr_a               ),
       .rf_rdata_a_i                 ( rf_rdata_a               ),
       .rf_raddr_b_o                 ( rf_raddr_b               ),
       .rf_rdata_b_i                 ( rf_rdata_b               ),
+      .rf_raddr_c_o                 ( rf_raddr_c               ),  // RV32F
+      .rf_rdata_c_i                 ( rf_rdata_c               ),
+      // RV32F ======================================================= //
+      .frf_rdata_a_i                ( frf_rdata_a              ),
+      .frf_rdata_b_i                ( frf_rdata_b              ),
+      .frf_rdata_c_i                ( frf_rdata_c              ),  // RV32F
+      // RV32F ======================================================= //
       .rf_ren_a_o                   ( rf_ren_a                 ),
       .rf_ren_b_o                   ( rf_ren_b                 ),
+      //.rf_ren_c_o                   ( rf_ren_c                 ),    // RV32F
       .rf_waddr_id_o                ( rf_waddr_id              ),
       .rf_wdata_id_o                ( rf_wdata_id              ),
       .rf_we_id_o                   ( rf_we_id                 ),
+      // RV32F ======================================================= //
+      .frf_we_id_o                  ( frf_we_id                ),
+      .rf_rd_c_wb_match_o           ( rf_rd_c_wb_match         ),
+      // RV32F ======================================================= //
       .rf_rd_a_wb_match_o           ( rf_rd_a_wb_match         ),
       .rf_rd_b_wb_match_o           ( rf_rd_b_wb_match         ),
 
@@ -651,7 +711,11 @@ module ibex_core #(
       .alu_operator_i           ( alu_operator_ex          ),
       .alu_operand_a_i          ( alu_operand_a_ex         ),
       .alu_operand_b_i          ( alu_operand_b_ex         ),
+      .alu_operand_c_i          ( alu_operand_c_ex         ),    // RV32F
       .alu_instr_first_cycle_i  ( instr_first_cycle_id     ),
+      // RV32F =========================================== //
+      .falu_rounding_mode_i     ( falu_rounding_mode       ),
+      // RV32F =========================================== //
 
       // Branch target ALU signal from ID stage
       .bt_a_operand_i           ( bt_a_operand             ),
@@ -661,6 +725,10 @@ module ibex_core #(
       .multdiv_operator_i       ( multdiv_operator_ex      ),
       .mult_en_i                ( mult_en_ex               ),
       .div_en_i                 ( div_en_ex                ),
+      // RV32F ============================================= //
+      .fdiv_en_i                ( fdiv_en_ex               ),
+      .convert_en_i             ( convert_en_ex            ),
+      // RV32F ============================================= //
       .mult_sel_i               ( mult_sel_ex              ),
       .div_sel_i                ( div_sel_ex               ),
       .multdiv_signed_mode_i    ( multdiv_signed_mode_ex   ),
@@ -710,12 +778,18 @@ module ibex_core #(
 
       // signals to/from ID/EX stage
       .lsu_we_i              ( lsu_we              ),
+      // RV32F ============================================ //
+      .lsu_extension_i       ( lsu_extension       ),    // inform lsu what kind of 
+      // RV32F ============================================ //
       .lsu_type_i            ( lsu_type            ),
-      .lsu_wdata_i           ( lsu_wdata           ),
+      .lsu_wdata_i           ( lsu_wdata           ),    // ME: data to write into mem
       .lsu_sign_ext_i        ( lsu_sign_ext        ),
 
       .lsu_rdata_o           ( rf_wdata_lsu        ),
       .lsu_rdata_valid_o     ( rf_we_lsu           ),
+      // RV32F ============================================ //
+      .lsu_frdata_valid_o    ( frf_we_lsu          ),
+      // RV32F ============================================ //
       .lsu_req_i             ( lsu_req             ),
       .lsu_req_done_o        ( lsu_req_done        ),
 
@@ -759,15 +833,25 @@ module ibex_core #(
     .rf_waddr_id_i                  ( rf_waddr_id                  ),
     .rf_wdata_id_i                  ( rf_wdata_id                  ),
     .rf_we_id_i                     ( rf_we_id                     ),
+    // RV32F ======================================================= //
+    .frf_we_id_i                    ( frf_we_id                    ),
+    // RV32F ======================================================= //
 
     .rf_wdata_lsu_i                 ( rf_wdata_lsu                 ),
     .rf_we_lsu_i                    ( rf_we_lsu                    ),
+    // RV32F ======================================================== //
+    .frf_we_lsu_i                   ( frf_we_lsu                   ),
+    // RV32F ======================================================== //
 
     .rf_wdata_fwd_wb_o              ( rf_wdata_fwd_wb              ),
 
     .rf_waddr_wb_o                  ( rf_waddr_wb                  ),
-    .rf_wdata_wb_o                  ( rf_wdata_wb                  ),
+    .rf_wdata_wb_o                  ( rf_wdata_wb                  ),    
     .rf_we_wb_o                     ( rf_we_wb                     ),
+    // RV32F ========================================================= //
+    .frf_wdata_wb_o                 ( frf_wdata_wb                    ),
+    .frf_we_wb_o                    ( frf_we_wb                    ),
+    // RV32F ========================================================= //
 
     .lsu_resp_valid_i               ( lsu_resp_valid               ),
     .lsu_resp_err_i                 ( lsu_resp_err                 ),
@@ -782,6 +866,13 @@ module ibex_core #(
   logic [RegFileDataWidth-1:0] rf_wdata_wb_ecc;
   logic [RegFileDataWidth-1:0] rf_rdata_a_ecc;
   logic [RegFileDataWidth-1:0] rf_rdata_b_ecc;
+  logic [RegFileDataWidth-1:0] rf_rdata_c_ecc;
+  // RV32F ================================================= //
+  logic [RegFileDataWidth-1:0] frf_wdata_wb_ecc;
+  logic [RegFileDataWidth-1:0] frf_rdata_a_ecc;
+  logic [RegFileDataWidth-1:0] frf_rdata_b_ecc;
+  logic [RegFileDataWidth-1:0] frf_rdata_c_ecc;
+  // RV32F ================================================= //
   logic                        rf_ecc_err_comb;
 
   if (RegFileECC) begin : gen_regfile_ecc
@@ -809,13 +900,22 @@ module ibex_core #(
       .err_o      (rf_ecc_err_b)
     );
 
+    // TODO 写一个浮点数的 regfile_ecc_dec_b
+
     // Assign read outputs - no error correction, just trigger an alert
     assign rf_rdata_a = rf_rdata_a_ecc[31:0];
     assign rf_rdata_b = rf_rdata_b_ecc[31:0];
+    assign rf_rdata_c = rf_rdata_c_ecc[31:0];
+    // RV32F =============================================== //
+    assign frf_rdata_a = frf_rdata_a_ecc[31:0];
+    assign frf_rdata_b = frf_rdata_b_ecc[31:0];
+    assign frf_rdata_c = frf_rdata_c_ecc[31:0];
+    // RV32F =============================================== // 
 
     // Calculate errors - qualify with WB forwarding to avoid xprop into the alert signal
     assign rf_ecc_err_a_id = |rf_ecc_err_a & rf_ren_a & ~rf_rd_a_wb_match;
     assign rf_ecc_err_b_id = |rf_ecc_err_b & rf_ren_b & ~rf_rd_b_wb_match;
+    // TODO C
 
     // Combined error
     assign rf_ecc_err_comb = instr_valid_id & (rf_ecc_err_a_id | rf_ecc_err_b_id);
@@ -823,14 +923,24 @@ module ibex_core #(
   end else begin : gen_no_regfile_ecc
     logic unused_rf_ren_a, unused_rf_ren_b;
     logic unused_rf_rd_a_wb_match, unused_rf_rd_b_wb_match;
+    // TODO C
 
     assign unused_rf_ren_a         = rf_ren_a;
     assign unused_rf_ren_b         = rf_ren_b;
+    // TODO C
     assign unused_rf_rd_a_wb_match = rf_rd_a_wb_match;
     assign unused_rf_rd_b_wb_match = rf_rd_b_wb_match;
-    assign rf_wdata_wb_ecc         = rf_wdata_wb;
+    // TODO C
+    assign rf_wdata_wb_ecc         = rf_wdata_wb;           
     assign rf_rdata_a              = rf_rdata_a_ecc;
     assign rf_rdata_b              = rf_rdata_b_ecc;
+    assign rf_rdata_c              = rf_rdata_c_ecc;
+    // RV32F ============================================== //
+    assign frf_wdata_wb_ecc        = frf_wdata_wb; 
+    assign frf_rdata_a             = frf_rdata_a_ecc;
+    assign frf_rdata_b             = frf_rdata_b_ecc;
+    assign frf_rdata_c             = frf_rdata_c_ecc;
+    // RV32F ============================================== //
     assign rf_ecc_err_comb         = 1'b0;
   end
 
@@ -850,10 +960,37 @@ module ibex_core #(
         .rdata_a_o        ( rf_rdata_a_ecc  ),
         .raddr_b_i        ( rf_raddr_b      ),
         .rdata_b_o        ( rf_rdata_b_ecc  ),
+        .raddr_c_i        ( rf_raddr_c      ),
+        .rdata_c_o        ( rf_rdata_c_ecc  ),
         .waddr_a_i        ( rf_waddr_wb     ),
-        .wdata_a_i        ( rf_wdata_wb_ecc ),
-        .we_a_i           ( rf_we_wb        )
+        .wdata_a_i        ( rf_wdata_wb_ecc ),    
+        .we_a_i           ( rf_we_wb        )     // ME: 能写或者不能写，是由 idstage 决定的
     );
+    // RV32F ================================================ //
+    ibex_fregister_file_ff #(
+        //.RV32E           ( RV32E             ),
+        .DataWidth         ( RegFileDataWidth  ),
+        .DummyInstructions ( DummyInstructions ),
+        .ADDR_WIDTH        ( 'd5               )
+    ) register_file_f (
+        .clk_i            ( clk_i           ),
+        .rst_ni           ( rst_ni          ),
+
+        .test_en_i        ( test_en_i       ),
+        .dummy_instr_id_i ( dummy_instr_id  ),
+
+        .raddr_a_i        ( rf_raddr_a      ),
+        .rdata_a_o        ( frf_rdata_a_ecc ),
+        .raddr_b_i        ( rf_raddr_b      ),
+        .rdata_b_o        ( frf_rdata_b_ecc ),
+        .raddr_c_i        ( rf_raddr_c      ),
+        .rdata_c_o        ( frf_rdata_c_ecc ),
+        .waddr_a_i        ( rf_waddr_wb     ),
+        .wdata_a_i        ( frf_wdata_wb_ecc),
+        .we_a_i           ( frf_we_wb       )
+    );
+    // RV32F ================================================= //
+    // TODO 给下面两种寄存器扩展一下浮点寄存器
   end else if (RegFile == RegFileFPGA) begin : gen_regfile_fpga
     ibex_register_file_fpga #(
         .RV32E             ( RV32E             ),
@@ -961,11 +1098,12 @@ module ibex_core #(
   ////////////////////////
   // RF (Register File) //
   ////////////////////////
-`ifdef RVFI
+`ifdef RVFI 
   assign rvfi_rd_addr_wb  = rf_waddr_wb;
   assign rvfi_rd_wdata_wb = rf_we_wb ? rf_wdata_wb : rf_wdata_lsu;
   assign rvfi_rd_we_wb    = rf_we_wb | rf_we_lsu;
 `endif
+  // TODO add floating point extension concerning signal frf_we_wb/frf_we_lsu
 
 
   /////////////////////////////////////////
@@ -974,6 +1112,12 @@ module ibex_core #(
 
   assign csr_wdata  = alu_operand_a_ex;
   assign csr_addr   = csr_num_e'(csr_access ? alu_operand_b_ex[11:0] : 12'b0);
+  
+  // RV32F =========================== //
+  // TODO
+  logic [31:0] xxx;
+  assign xxx = 32'b0000_0000_0000_0000_0000_0000_0110_0000;   // 先把 frm field 给写死
+  // RV32F =========================== //
 
   ibex_cs_registers #(
       .DbgTriggerEn      ( DbgTriggerEn      ),
@@ -1061,6 +1205,10 @@ module ibex_core #(
       .csr_mcause_i            ( exc_cause                    ),
       .csr_mtval_i             ( csr_mtval                    ),
       .illegal_csr_insn_o      ( illegal_csr_insn_id          ),
+      // RV32F ===================================================== //
+      .wr_fcsr_i               ( xxx                          ),
+      .dyn_rounding_mode_o     ( dyn_rounding_mode_id         ),
+      // RV32F ===================================================== //
 
       // performance counter related signals
       .instr_ret_i             ( perf_instr_ret_wb            ),
@@ -1373,6 +1521,7 @@ module ibex_core #(
       rvfi_rs1_addr_d = rf_ren_a ? rf_raddr_a : '0;
       rvfi_rs2_data_d = rf_ren_b ? multdiv_operand_b_ex : '0;
       rvfi_rs2_addr_d = rf_ren_b ? rf_raddr_b : '0;
+      // TODO C
       rvfi_rs3_data_d = '0;
       rvfi_rs3_addr_d = '0;
     end else begin

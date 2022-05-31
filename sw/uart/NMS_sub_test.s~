@@ -1,0 +1,21 @@
+.text
+
+.align 1
+
+.global main
+
+main:                   
+
+    li x9,0x10000000
+    li x18,0x42c80000
+    li x19,0x42c00000
+    sw x18,0x0(x9)
+    flw f18,0x0(x9)
+    flw f19,0x0(x9)
+    sw x19,0x0(x9)
+    flw f20,0x0(x9)
+    fsubabs.s f21,f18,f19
+    fsub.s f22,f18,f19
+    fsub.s f23,f18,f20
+
+
