@@ -1,37 +1,13 @@
-# AHBL_SOC_IBEX
-
-#### 介绍
-基于AHB-Lite总线的SOC系统(ibex内核)
-
-#### 软件架构
-软件架构说明
-
-
-#### 安装教程
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 使用说明
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+# Ibex RISCV
+This is a project about ibex-riscv floating-point instruction set extension. Ibex-riscv is originally a light-weighted riscv cpu which only supports integer instruction set.\
+\
+I extend part of the **RV32F** instruction set based on integer ibex cpu, and handwrite the assembly of **NMS** algorithm. The assembly go through the test on FPGA successfully.\
+\
+Compared with the original ibex cpu, this cpu has the following modifications:
+1. Add an uart and a gpio as perpherial.
+2. Add an divide-by-10 module. 
+3. Combine the 4 8&times;1024 srams into a 32&times;1024 sram
+4. Extend following instructions:
++ **RV32F:** FLW / FSW / FMADD.S / FMSUB.S / FNMSUB.S / FNMADD.S / FADD.S / FSUB.S / FMUL.S / FDIV.S / FMIN.S / FMAX.S / FEQ.S / FLT.S / FCVT.S.W
++ **custom RV32F:** FSUBABS.S / FADDDIV.S
++ **custom RV32I:** MUL / addrtwo / addrfive / plusonelt
